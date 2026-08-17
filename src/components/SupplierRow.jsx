@@ -1,4 +1,5 @@
 import { useLanguage } from "../context/LanguageContext";
+import { convertToBase, formatRate } from "../utils/currency";
 
 const COUNTRIES = ["Saudi Arabia", "UAE", "China", "Egypt", "India", "Other"];
 const CURRENCIES = ["SAR", "USD", "CNY", "EUR"];
@@ -39,13 +40,27 @@ function buildLabels(t, category, options) {
   );
 }
 
-export default function SupplierRow({ supplier, index, onChange, onRemove }) {
+export default function SupplierRow({
+  supplier,
+  index,
+  onChange,
+  onRemove,
+  baseCurrency,
+  fxRates,
+}) {
   const { t } = useLanguage();
   const set = (field) => (e) => onChange(supplier.id, field, e.target.value);
 
   const countryLabels = buildLabels(t, "countries", COUNTRIES);
   const paymentTermsLabels = buildLabels(t, "paymentTerms", PAYMENT_TERMS);
   const sasoStatusLabels = buildLabels(t, "sasoStatuses", SASO_STATUSES);
+
+  const showRate =
+    baseCurrency && fxRates && supplier.currency !== baseCurrency;
+  const rateValue = showRate
+    ? convertToBase(1, supplier.currency, baseCurrency, fxRates)
+    : null;
+  const rateLabel = formatRate(rateValue);
 
   return (
     <tr className="border-b border-gray-200 align-top">
@@ -69,6 +84,11 @@ export default function SupplierRow({ supplier, index, onChange, onRemove }) {
       </td>
       <td className="py-2 pr-2">
         <Select value={supplier.currency} onChange={set("currency")} options={CURRENCIES} />
+        {rateLabel && (
+          <p className="mt-1 text-[11px] text-gray-500 whitespace-nowrap">
+            1 {supplier.currency} ≈ {rateLabel} {baseCurrency}
+          </p>
+        )}
       </td>
       <td className="py-2 pr-2">
         <input

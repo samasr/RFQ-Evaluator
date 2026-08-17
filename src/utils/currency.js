@@ -59,3 +59,14 @@ export function convertToBase(amount, fromCurrency, baseCurrency, rates) {
   if (!rate) return null;
   return numeric / rate;
 }
+
+// Formats a converted rate/amount for compact inline display (e.g. "3.75").
+export function formatRate(value) {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return null;
+  }
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  });
+}

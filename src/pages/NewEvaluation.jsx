@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SupplierRow, { CURRENCIES } from "../components/SupplierRow";
 import { useLanguage } from "../context/LanguageContext";
+import { fetchExchangeRates } from "../utils/currency";
 
 const MAX_SUPPLIERS = 10;
 
@@ -38,6 +39,23 @@ export default function NewEvaluation() {
   });
 
   const [suppliers, setSuppliers] = useState([emptySupplier()]);
+
+  const [fx, setFx] = useState({ status: "idle", rates: null });
+
+  useEffect(() => {
+    let cancelled = false;
+    setFx({ status: "loading", rates: null });
+    fetchExchangeRates(rfqHeader.baseCurrency)
+      .then(({ rates }) => {
+        if (!cancelled) setFx({ status: "success", rates });
+      })
+      .catch(() => {
+        if (!cancelled) setFx({ status: "error", rates: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [rfqHeader.baseCurrency]);
 
   const updateHeaderField = (field) => (e) =>
     setRfqHeader((prev) => ({ ...prev, [field]: e.target.value }));
@@ -198,6 +216,8 @@ export default function NewEvaluation() {
                   index={index}
                   onChange={updateSupplierField}
                   onRemove={removeSupplier}
+                  baseCurrency={rfqHeader.baseCurrency}
+                  fxRates={fx.status === "success" ? fx.rates : null}
                 />
               ))}
               {suppliers.length === 0 && (
