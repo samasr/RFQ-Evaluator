@@ -263,11 +263,6 @@ export default function Results() {
               <th className="py-2 pr-4 text-navy">{t("results.table.supplier")}</th>
               <th className="py-2 pr-4 text-navy">{t("results.table.country")}</th>
               <th className="py-2 pr-4 text-navy">{t("results.table.unitPrice")}</th>
-              {conversionActive && (
-                <th className="py-2 pr-4 text-navy">
-                  {t("results.table.priceIn", { currency: baseCurrency })}
-                </th>
-              )}
               <th className="py-2 pr-4 text-navy">{t("results.table.leadTime")}</th>
               <th className="py-2 pr-4 text-navy">{t("results.table.paymentTerms")}</th>
               <th className="py-2 pr-4 text-navy">{t("results.table.moq")}</th>
@@ -287,15 +282,18 @@ export default function Results() {
                 <td className="py-2 pr-4">
                   {t(`options.countries.${s.country}`)}
                 </td>
-                <td className="py-2 pr-4">
+                <td className="py-2 pr-4 whitespace-nowrap">
                   {s.unitPriceOriginal || "—"}{" "}
                   <span className="text-gray-400">{s.currencyOriginal}</span>
+                  {conversionActive &&
+                    s.currencyOriginal !== baseCurrency &&
+                    s.unitPrice != null && (
+                      <span className="text-gray-400">
+                        {" "}
+                        ({s.unitPrice.toFixed(2)} {baseCurrency})
+                      </span>
+                    )}
                 </td>
-                {conversionActive && (
-                  <td className="py-2 pr-4">
-                    {s.unitPrice != null ? s.unitPrice.toFixed(2) : "—"}
-                  </td>
-                )}
                 <td className="py-2 pr-4">{s.leadTime || "—"}</td>
                 <td className="py-2 pr-4">
                   {t(`options.paymentTerms.${s.paymentTerms}`)}
