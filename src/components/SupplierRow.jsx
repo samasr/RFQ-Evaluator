@@ -21,21 +21,31 @@ const DELIVERY_TERMS = ["DDP", "DAP", "CIF", "FOB", "EXW", "CFR"];
 const inputClass =
   "w-full min-w-[7rem] rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy";
 
-function Select({ value, onChange, options }) {
+function Select({ value, onChange, options, labels }) {
   return (
     <select value={value} onChange={onChange} className={inputClass}>
       {options.map((option) => (
         <option key={option} value={option}>
-          {option}
+          {labels?.[option] ?? option}
         </option>
       ))}
     </select>
   );
 }
 
+function buildLabels(t, category, options) {
+  return Object.fromEntries(
+    options.map((option) => [option, t(`options.${category}.${option}`)])
+  );
+}
+
 export default function SupplierRow({ supplier, index, onChange, onRemove }) {
   const { t } = useLanguage();
   const set = (field) => (e) => onChange(supplier.id, field, e.target.value);
+
+  const countryLabels = buildLabels(t, "countries", COUNTRIES);
+  const paymentTermsLabels = buildLabels(t, "paymentTerms", PAYMENT_TERMS);
+  const sasoStatusLabels = buildLabels(t, "sasoStatuses", SASO_STATUSES);
 
   return (
     <tr className="border-b border-gray-200 align-top">
@@ -50,7 +60,12 @@ export default function SupplierRow({ supplier, index, onChange, onRemove }) {
         />
       </td>
       <td className="py-2 pr-2">
-        <Select value={supplier.country} onChange={set("country")} options={COUNTRIES} />
+        <Select
+          value={supplier.country}
+          onChange={set("country")}
+          options={COUNTRIES}
+          labels={countryLabels}
+        />
       </td>
       <td className="py-2 pr-2">
         <Select value={supplier.currency} onChange={set("currency")} options={CURRENCIES} />
@@ -78,6 +93,7 @@ export default function SupplierRow({ supplier, index, onChange, onRemove }) {
           value={supplier.paymentTerms}
           onChange={set("paymentTerms")}
           options={PAYMENT_TERMS}
+          labels={paymentTermsLabels}
         />
       </td>
       <td className="py-2 pr-2">
@@ -94,6 +110,7 @@ export default function SupplierRow({ supplier, index, onChange, onRemove }) {
           value={supplier.sasoStatus}
           onChange={set("sasoStatus")}
           options={SASO_STATUSES}
+          labels={sasoStatusLabels}
         />
       </td>
       <td className="py-2 pr-2">

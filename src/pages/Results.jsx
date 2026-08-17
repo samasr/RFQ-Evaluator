@@ -284,7 +284,9 @@ export default function Results() {
                   <ScoreBadge score={s.score} breakdown={s.scoreBreakdown} />
                 </td>
                 <td className="py-2 pr-4">{s.name || "—"}</td>
-                <td className="py-2 pr-4">{s.country}</td>
+                <td className="py-2 pr-4">
+                  {t(`options.countries.${s.country}`)}
+                </td>
                 <td className="py-2 pr-4">
                   {s.unitPriceOriginal || "—"}{" "}
                   <span className="text-gray-400">{s.currencyOriginal}</span>
@@ -295,9 +297,13 @@ export default function Results() {
                   </td>
                 )}
                 <td className="py-2 pr-4">{s.leadTime || "—"}</td>
-                <td className="py-2 pr-4">{s.paymentTerms}</td>
+                <td className="py-2 pr-4">
+                  {t(`options.paymentTerms.${s.paymentTerms}`)}
+                </td>
                 <td className="py-2 pr-4">{s.moq || "—"}</td>
-                <td className="py-2 pr-4">{s.sasoStatus}</td>
+                <td className="py-2 pr-4">
+                  {t(`options.sasoStatuses.${s.sasoStatus}`)}
+                </td>
                 <td className="py-2 pr-4">{s.deliveryTerms}</td>
                 <td className="py-2 pr-4">{s.notes || "—"}</td>
               </tr>

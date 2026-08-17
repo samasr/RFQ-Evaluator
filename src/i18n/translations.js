@@ -9,6 +9,33 @@ const translations = {
     footer: {
       rights: "All rights reserved.",
     },
+    // Currency codes (SAR/USD/CNY/EUR) and Incoterms (DDP/FOB/etc.) are
+    // universal codes and stay unlocalized; only these value-labeled option
+    // sets need translated display text while keeping their stored values.
+    options: {
+      countries: {
+        "Saudi Arabia": "Saudi Arabia",
+        UAE: "UAE",
+        China: "China",
+        Egypt: "Egypt",
+        India: "India",
+        Other: "Other",
+      },
+      paymentTerms: {
+        "100% upfront": "100% upfront",
+        "50% advance": "50% advance",
+        "Net 30": "Net 30",
+        "Net 60": "Net 60",
+        "LC at sight": "LC at sight",
+      },
+      sasoStatuses: {
+        "SASO + ISO": "SASO + ISO",
+        "SASO only": "SASO only",
+        "ISO only": "ISO only",
+        None: "None",
+        "Not stated": "Not stated",
+      },
+    },
     home: {
       heading: "Home",
     },
@@ -94,6 +121,30 @@ const translations = {
     },
     footer: {
       rights: "جميع الحقوق محفوظة.",
+    },
+    options: {
+      countries: {
+        "Saudi Arabia": "السعودية",
+        UAE: "الإمارات",
+        China: "الصين",
+        Egypt: "مصر",
+        India: "الهند",
+        Other: "أخرى",
+      },
+      paymentTerms: {
+        "100% upfront": "دفع كامل مقدمًا",
+        "50% advance": "دفعة مقدمة 50%",
+        "Net 30": "صافي 30 يومًا",
+        "Net 60": "صافي 60 يومًا",
+        "LC at sight": "اعتماد مستندي عند الاطلاع",
+      },
+      sasoStatuses: {
+        "SASO + ISO": "سيسو + آيزو",
+        "SASO only": "سيسو فقط",
+        "ISO only": "آيزو فقط",
+        None: "لا يوجد",
+        "Not stated": "غير محدد",
+      },
     },
     home: {
       heading: "الرئيسية",
