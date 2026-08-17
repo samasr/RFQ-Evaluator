@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { rankSuppliers } from "../utils/scoring";
+import { fetchExchangeRates, convertToBase } from "../utils/currency";
 
 function loadEvaluation() {
   try {
@@ -10,14 +12,15 @@ function loadEvaluation() {
   }
 }
 
-function exportToCsv(rfqHeader, rankedSuppliers) {
+function exportToCsv(rfqHeader, rankedSuppliers, baseCurrency, conversionActive) {
   const headers = [
     "Rank",
     "Score",
     "Supplier",
     "Country",
-    "Currency",
     "Unit Price",
+    "Currency",
+    ...(conversionActive ? [`Price (${baseCurrency})`] : []),
     "Lead Time (days)",
     "Payment Terms",
     "MOQ",
@@ -31,8 +34,11 @@ function exportToCsv(rfqHeader, rankedSuppliers) {
       s.score,
       s.name,
       s.country,
-      s.currency,
-      s.unitPrice,
+      s.unitPriceOriginal,
+      s.currencyOriginal,
+      ...(conversionActive
+        ? [s.unitPrice != null ? Math.round(s.unitPrice * 100) / 100 : ""]
+        : []),
       s.leadTime,
       s.paymentTerms,
       s.moq,
@@ -69,6 +75,31 @@ export default function Results() {
   const evaluation = loadEvaluation();
   const rfqHeader = evaluation?.rfqHeader;
   const suppliers = evaluation?.suppliers ?? [];
+  const baseCurrency = rfqHeader?.baseCurrency || "SAR";
+
+  const needsConversion = suppliers.some((s) => s.currency !== baseCurrency);
+
+  const [fx, setFx] = useState({ status: "idle", rates: null, error: null });
+
+  useEffect(() => {
+    if (!needsConversion) {
+      setFx({ status: "idle", rates: null, error: null });
+      return;
+    }
+    let cancelled = false;
+    setFx({ status: "loading", rates: null, error: null });
+    fetchExchangeRates(baseCurrency)
+      .then(({ rates }) => {
+        if (!cancelled) setFx({ status: "success", rates, error: null });
+      })
+      .catch((err) => {
+        if (!cancelled)
+          setFx({ status: "error", rates: null, error: err.message });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [baseCurrency, needsConversion]);
 
   if (!evaluation || suppliers.length === 0) {
     return (
@@ -87,9 +118,21 @@ export default function Results() {
     );
   }
 
-  const rankedSuppliers = rankSuppliers(suppliers);
-  const hasMixedCurrencies =
-    new Set(suppliers.map((s) => s.currency)).size > 1;
+  const conversionActive = needsConversion && fx.status === "success";
+
+  const suppliersForScoring = suppliers.map((s) => {
+    const converted = conversionActive
+      ? convertToBase(s.unitPrice, s.currency, baseCurrency, fx.rates)
+      : null;
+    return {
+      ...s,
+      unitPriceOriginal: s.unitPrice,
+      currencyOriginal: s.currency,
+      unitPrice: converted ?? s.unitPrice,
+    };
+  });
+
+  const rankedSuppliers = rankSuppliers(suppliersForScoring);
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">
@@ -97,7 +140,9 @@ export default function Results() {
         <h1 className="text-3xl font-bold text-navy">Results</h1>
         <button
           type="button"
-          onClick={() => exportToCsv(rfqHeader, rankedSuppliers)}
+          onClick={() =>
+            exportToCsv(rfqHeader, rankedSuppliers, baseCurrency, conversionActive)
+          }
           className="bg-gold text-navy px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
         >
           Export to Excel
@@ -129,11 +174,21 @@ export default function Results() {
         </div>
       )}
 
-      {hasMixedCurrencies && (
+      {needsConversion && fx.status === "loading" && (
+        <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-md px-3 py-2 mb-6">
+          Fetching live exchange rates to compare prices in {baseCurrency}…
+        </p>
+      )}
+      {needsConversion && fx.status === "error" && (
         <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mb-6">
-          Suppliers quoted in different currencies — prices and scores compare
-          raw quoted amounts without FX conversion. Treat the price score as
-          directional, not exact, until currency conversion is added.
+          Couldn't fetch live exchange rates ({fx.error}). Prices and scores
+          are comparing raw quoted amounts without currency conversion.
+        </p>
+      )}
+      {conversionActive && (
+        <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-6">
+          Prices converted to {baseCurrency} using live exchange rates for
+          scoring and comparison.
         </p>
       )}
 
@@ -146,6 +201,9 @@ export default function Results() {
               <th className="py-2 pr-4 text-navy">Supplier</th>
               <th className="py-2 pr-4 text-navy">Country</th>
               <th className="py-2 pr-4 text-navy">Unit Price</th>
+              {conversionActive && (
+                <th className="py-2 pr-4 text-navy">Price ({baseCurrency})</th>
+              )}
               <th className="py-2 pr-4 text-navy">Lead Time (days)</th>
               <th className="py-2 pr-4 text-navy">Payment Terms</th>
               <th className="py-2 pr-4 text-navy">MOQ</th>
@@ -170,9 +228,14 @@ export default function Results() {
                 <td className="py-2 pr-4">{s.name || "—"}</td>
                 <td className="py-2 pr-4">{s.country}</td>
                 <td className="py-2 pr-4">
-                  {s.unitPrice || "—"}{" "}
-                  <span className="text-gray-400">{s.currency}</span>
+                  {s.unitPriceOriginal || "—"}{" "}
+                  <span className="text-gray-400">{s.currencyOriginal}</span>
                 </td>
+                {conversionActive && (
+                  <td className="py-2 pr-4">
+                    {s.unitPrice != null ? s.unitPrice.toFixed(2) : "—"}
+                  </td>
+                )}
                 <td className="py-2 pr-4">{s.leadTime || "—"}</td>
                 <td className="py-2 pr-4">{s.paymentTerms}</td>
                 <td className="py-2 pr-4">{s.moq || "—"}</td>
