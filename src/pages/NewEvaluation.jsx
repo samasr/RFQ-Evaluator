@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SupplierRow, { CURRENCIES } from "../components/SupplierRow";
+import { useLanguage } from "../context/LanguageContext";
 
 const MAX_SUPPLIERS = 10;
 
@@ -26,6 +27,7 @@ const labelClass = "block text-sm font-medium text-navy mb-1";
 
 export default function NewEvaluation() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [rfqHeader, setRfqHeader] = useState({
     title: "",
@@ -66,14 +68,18 @@ export default function NewEvaluation() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
-      <h1 className="text-3xl font-bold text-navy mb-8">New Evaluation</h1>
+      <h1 className="text-3xl font-bold text-navy mb-8">
+        {t("newEvaluation.heading")}
+      </h1>
 
       {/* PART A — RFQ Header */}
       <section className="mb-10">
-        <h2 className="text-lg font-semibold text-navy mb-4">RFQ Details</h2>
+        <h2 className="text-lg font-semibold text-navy mb-4">
+          {t("newEvaluation.rfqDetails")}
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
-            <label className={labelClass}>RFQ Title</label>
+            <label className={labelClass}>{t("newEvaluation.rfqTitle")}</label>
             <input
               type="text"
               value={rfqHeader.title}
@@ -82,7 +88,7 @@ export default function NewEvaluation() {
             />
           </div>
           <div>
-            <label className={labelClass}>Product / Material</label>
+            <label className={labelClass}>{t("newEvaluation.product")}</label>
             <input
               type="text"
               value={rfqHeader.product}
@@ -91,7 +97,9 @@ export default function NewEvaluation() {
             />
           </div>
           <div>
-            <label className={labelClass}>Est. Annual Volume</label>
+            <label className={labelClass}>
+              {t("newEvaluation.annualVolume")}
+            </label>
             <input
               type="number"
               min="0"
@@ -101,7 +109,9 @@ export default function NewEvaluation() {
             />
           </div>
           <div>
-            <label className={labelClass}>Base Currency</label>
+            <label className={labelClass}>
+              {t("newEvaluation.baseCurrency")}
+            </label>
             <select
               value={rfqHeader.baseCurrency}
               onChange={updateHeaderField("baseCurrency")}
@@ -115,7 +125,9 @@ export default function NewEvaluation() {
             </select>
           </div>
           <div>
-            <label className={labelClass}>Evaluation Date</label>
+            <label className={labelClass}>
+              {t("newEvaluation.evaluationDate")}
+            </label>
             <input
               type="date"
               value={rfqHeader.evaluationDate}
@@ -129,9 +141,12 @@ export default function NewEvaluation() {
       {/* PART B — Supplier Entry Table */}
       <section className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-navy">Suppliers</h2>
+          <h2 className="text-lg font-semibold text-navy">
+            {t("newEvaluation.suppliers")}
+          </h2>
           <span className="text-sm font-medium text-gray-600">
-            Suppliers Added: {suppliers.length}/{MAX_SUPPLIERS}
+            {t("newEvaluation.suppliersAdded")}: {suppliers.length}/
+            {MAX_SUPPLIERS}
           </span>
         </div>
 
@@ -139,17 +154,39 @@ export default function NewEvaluation() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-navy text-white text-sm">
-                <th className="py-2 px-2 font-medium">#</th>
-                <th className="py-2 px-2 font-medium">Supplier Name</th>
-                <th className="py-2 px-2 font-medium">Country</th>
-                <th className="py-2 px-2 font-medium">Currency</th>
-                <th className="py-2 px-2 font-medium">Unit Price</th>
-                <th className="py-2 px-2 font-medium">Lead Time (days)</th>
-                <th className="py-2 px-2 font-medium">Payment Terms</th>
-                <th className="py-2 px-2 font-medium">MOQ</th>
-                <th className="py-2 px-2 font-medium">SASO Status</th>
-                <th className="py-2 px-2 font-medium">Delivery Terms</th>
-                <th className="py-2 px-2 font-medium">Notes</th>
+                <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.index")}
+                </th>
+                <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.supplierName")}
+                </th>
+                <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.country")}
+                </th>
+                <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.currency")}
+                </th>
+                <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.unitPrice")}
+                </th>
+                <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.leadTime")}
+                </th>
+                <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.paymentTerms")}
+                </th>
+                <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.moq")}
+                </th>
+                <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.sasoStatus")}
+                </th>
+                <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.deliveryTerms")}
+                </th>
+                <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.notes")}
+                </th>
                 <th className="py-2 px-2 font-medium"></th>
               </tr>
             </thead>
@@ -166,7 +203,7 @@ export default function NewEvaluation() {
               {suppliers.length === 0 && (
                 <tr>
                   <td colSpan={12} className="py-6 text-center text-sm text-gray-500">
-                    No suppliers added yet.
+                    {t("newEvaluation.noSuppliers")}
                   </td>
                 </tr>
               )}
@@ -183,7 +220,7 @@ export default function NewEvaluation() {
           disabled={suppliers.length >= MAX_SUPPLIERS}
           className="bg-navy text-white px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          + Add Supplier
+          {t("newEvaluation.addSupplier")}
         </button>
 
         <button
@@ -191,7 +228,7 @@ export default function NewEvaluation() {
           onClick={handleSaveAndContinue}
           className="bg-gold text-navy px-5 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
         >
-          Save &amp; Continue
+          {t("newEvaluation.saveContinue")}
         </button>
       </div>
     </div>

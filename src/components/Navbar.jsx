@@ -1,9 +1,8 @@
 import { Link } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 
-export default function Navbar({ language, setLanguage }) {
-  const toggleLanguage = () => {
-    setLanguage((prev) => (prev === "en" ? "ar" : "en"));
-  };
+export default function Navbar() {
+  const { language, toggleLanguage, t } = useLanguage();
 
   return (
     <nav className="bg-navy text-white shadow-md">
@@ -14,19 +13,19 @@ export default function Navbar({ language, setLanguage }) {
 
         <div className="flex items-center gap-8">
           <Link to="/" className="hover:text-gold transition-colors">
-            Home
+            {t("nav.home")}
           </Link>
           <Link to="/dashboard" className="hover:text-gold transition-colors">
-            Dashboard
+            {t("nav.dashboard")}
           </Link>
           <Link
             to="/new-evaluation"
             className="hover:text-gold transition-colors"
           >
-            New Evaluation
+            {t("nav.newEvaluation")}
           </Link>
           <Link to="/results" className="hover:text-gold transition-colors">
-            Results
+            {t("nav.results")}
           </Link>
 
           <button

@@ -1,3 +1,5 @@
+import { useLanguage } from "../context/LanguageContext";
+
 const COUNTRIES = ["Saudi Arabia", "UAE", "China", "Egypt", "India", "Other"];
 const CURRENCIES = ["SAR", "USD", "CNY", "EUR"];
 const PAYMENT_TERMS = [
@@ -32,6 +34,7 @@ function Select({ value, onChange, options }) {
 }
 
 export default function SupplierRow({ supplier, index, onChange, onRemove }) {
+  const { t } = useLanguage();
   const set = (field) => (e) => onChange(supplier.id, field, e.target.value);
 
   return (
@@ -42,7 +45,7 @@ export default function SupplierRow({ supplier, index, onChange, onRemove }) {
           type="text"
           value={supplier.name}
           onChange={set("name")}
-          placeholder="Supplier name"
+          placeholder={t("newEvaluation.supplierNamePlaceholder")}
           className={inputClass}
         />
       </td>
@@ -105,7 +108,7 @@ export default function SupplierRow({ supplier, index, onChange, onRemove }) {
           type="text"
           value={supplier.notes}
           onChange={set("notes")}
-          placeholder="Notes"
+          placeholder={t("newEvaluation.notesPlaceholder")}
           className={inputClass}
         />
       </td>
@@ -115,7 +118,7 @@ export default function SupplierRow({ supplier, index, onChange, onRemove }) {
           onClick={() => onRemove(supplier.id)}
           className="text-sm font-medium text-red-600 hover:text-red-800 whitespace-nowrap"
         >
-          Remove
+          {t("newEvaluation.remove")}
         </button>
       </td>
     </tr>
