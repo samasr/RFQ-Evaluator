@@ -80,3 +80,12 @@ export function scoreSuppliers(suppliers) {
 export function rankSuppliers(suppliers) {
   return scoreSuppliers(suppliers).sort((a, b) => b.score - a.score);
 }
+
+// Labeled view of WEIGHTS for rendering a score breakdown in the UI.
+export const SCORE_CRITERIA = [
+  { key: "price", label: "Price", weight: WEIGHTS.price },
+  { key: "leadTime", label: "Lead Time", weight: WEIGHTS.leadTime },
+  { key: "compliance", label: "SASO/ISO Compliance", weight: WEIGHTS.compliance },
+  { key: "paymentTerms", label: "Payment Terms", weight: WEIGHTS.paymentTerms },
+  { key: "moq", label: "MOQ", weight: WEIGHTS.moq },
+];

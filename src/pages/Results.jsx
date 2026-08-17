@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { rankSuppliers } from "../utils/scoring";
+import { rankSuppliers, SCORE_CRITERIA } from "../utils/scoring";
 import { fetchExchangeRates, convertToBase } from "../utils/currency";
 
 function loadEvaluation() {
@@ -69,6 +69,64 @@ function scoreBadgeClass(score) {
   if (score >= 75) return "bg-green-100 text-green-800";
   if (score >= 50) return "bg-yellow-100 text-yellow-800";
   return "bg-red-100 text-red-800";
+}
+
+function ScoreBadge({ score, breakdown }) {
+  const badgeRef = useRef(null);
+  // Positioned via getBoundingClientRect + position:fixed so the tooltip
+  // escapes the table's overflow-x-auto wrapper instead of being clipped by it.
+  const [tooltipPos, setTooltipPos] = useState(null);
+
+  const showTooltip = () => {
+    const rect = badgeRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setTooltipPos({ top: rect.bottom + 8, left: rect.left + rect.width / 2 });
+  };
+  const hideTooltip = () => setTooltipPos(null);
+
+  return (
+    <>
+      <span
+        ref={badgeRef}
+        tabIndex={0}
+        onMouseEnter={showTooltip}
+        onMouseLeave={hideTooltip}
+        onFocus={showTooltip}
+        onBlur={hideTooltip}
+        className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold cursor-default focus:outline-none focus:ring-2 focus:ring-navy ${scoreBadgeClass(
+          score
+        )}`}
+      >
+        {score}
+      </span>
+
+      {tooltipPos && (
+        <div
+          style={{
+            position: "fixed",
+            top: tooltipPos.top,
+            left: tooltipPos.left,
+            transform: "translateX(-50%)",
+          }}
+          className="z-50 w-60 rounded-md bg-navy text-white text-xs shadow-lg p-3 pointer-events-none"
+        >
+          <p className="font-semibold mb-2">Score Breakdown</p>
+          <ul className="space-y-1">
+            {SCORE_CRITERIA.map((c) => (
+              <li key={c.key} className="flex justify-between gap-2">
+                <span className="text-white/80">
+                  {c.label} ({Math.round(c.weight * 100)}%)
+                </span>
+                <span className="font-medium">
+                  {Math.round(breakdown[c.key])}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  );
 }
 
 export default function Results() {
@@ -217,13 +275,7 @@ export default function Results() {
               <tr key={s.id} className="border-b border-gray-200">
                 <td className="py-2 pr-4 font-semibold text-navy">{i + 1}</td>
                 <td className="py-2 pr-4">
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${scoreBadgeClass(
-                      s.score
-                    )}`}
-                  >
-                    {s.score}
-                  </span>
+                  <ScoreBadge score={s.score} breakdown={s.scoreBreakdown} />
                 </td>
                 <td className="py-2 pr-4">{s.name || "—"}</td>
                 <td className="py-2 pr-4">{s.country}</td>
