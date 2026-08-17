@@ -196,7 +196,9 @@ export default function Results() {
     };
   });
 
-  const rankedSuppliers = rankSuppliers(suppliersForScoring);
+  const rankedSuppliers = rankSuppliers(suppliersForScoring, {
+    annualVolume: rfqHeader?.annualVolume,
+  });
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">

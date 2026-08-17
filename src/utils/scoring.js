@@ -29,6 +29,19 @@ function toNumber(value) {
   return Number.isFinite(n) && value !== "" ? n : null;
 }
 
+// How well a supplier's MOQ fits the RFQ's estimated annual volume: a MOQ at
+// or under the annual volume fully covers demand without over-committing
+// inventory (score 100). A MOQ above the volume forces overbuying, penalized
+// proportionally to how far it overshoots.
+function moqFitScore(moq, annualVolume) {
+  const moqNum = toNumber(moq);
+  const volumeNum = toNumber(annualVolume);
+  if (moqNum === null || moqNum <= 0 || volumeNum === null || volumeNum <= 0) {
+    return null;
+  }
+  return Math.min(100, (volumeNum / moqNum) * 100);
+}
+
 // Normalizes a numeric field across all suppliers: lower raw value -> higher score.
 // Suppliers missing the field score 0 for that criterion; they don't affect the min/max range.
 function normalizeLowerIsBetter(suppliers, field) {
@@ -47,10 +60,16 @@ function normalizeLowerIsBetter(suppliers, field) {
   });
 }
 
-export function scoreSuppliers(suppliers) {
+export function scoreSuppliers(suppliers, { annualVolume } = {}) {
   const priceScores = normalizeLowerIsBetter(suppliers, "unitPrice");
   const leadTimeScores = normalizeLowerIsBetter(suppliers, "leadTime");
-  const moqScores = normalizeLowerIsBetter(suppliers, "moq");
+
+  // With a known annual volume, score MOQ by how well it fits that volume
+  // rather than just favoring the lowest MOQ in the set.
+  const hasVolume = toNumber(annualVolume) !== null && toNumber(annualVolume) > 0;
+  const moqScores = hasVolume
+    ? suppliers.map((s) => moqFitScore(s.moq, annualVolume) ?? 0)
+    : normalizeLowerIsBetter(suppliers, "moq");
 
   return suppliers.map((supplier, i) => {
     const complianceScore = SASO_SCORES[supplier.sasoStatus] ?? 0;
@@ -77,8 +96,8 @@ export function scoreSuppliers(suppliers) {
   });
 }
 
-export function rankSuppliers(suppliers) {
-  return scoreSuppliers(suppliers).sort((a, b) => b.score - a.score);
+export function rankSuppliers(suppliers, options) {
+  return scoreSuppliers(suppliers, options).sort((a, b) => b.score - a.score);
 }
 
 // Labeled view of WEIGHTS for rendering a score breakdown in the UI.
@@ -87,5 +106,5 @@ export const SCORE_CRITERIA = [
   { key: "leadTime", label: "Lead Time", weight: WEIGHTS.leadTime },
   { key: "compliance", label: "SASO/ISO Compliance", weight: WEIGHTS.compliance },
   { key: "paymentTerms", label: "Payment Terms", weight: WEIGHTS.paymentTerms },
-  { key: "moq", label: "MOQ", weight: WEIGHTS.moq },
+  { key: "moq", label: "MOQ Fit", weight: WEIGHTS.moq },
 ];
