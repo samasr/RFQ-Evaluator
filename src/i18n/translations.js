@@ -103,6 +103,7 @@ const translations = {
       suppliers: "Suppliers",
       suppliersAdded: "Suppliers Added",
       addSupplier: "+ Add Supplier",
+      loadSample: "Load Sample RFQ",
       saveContinue: "Save & Continue",
       noSuppliers: "No suppliers added yet.",
       table: {
@@ -123,6 +124,21 @@ const translations = {
       portCityPlaceholder: "e.g. Jeddah, Shenzhen",
       notesPlaceholder: "Notes",
       remove: "Remove",
+      upload: {
+        heading: "Upload Quotations (AI Extraction)",
+        description:
+          "Upload supplier quote PDFs or images and let AI fill in the table below for you — review the extracted details before saving.",
+        notConfigured:
+          "AI extraction isn't configured yet — set VITE_AI_PROXY_URL to your deployed proxy URL.",
+        dropzone: "Click to choose files or drag and drop",
+        fileTypes: "PDF or image, up to {max} files",
+        statusPending: "Pending",
+        remove: "Remove file",
+        extractButton: "Extract Suppliers with AI",
+        extracting: "Extracting…",
+        progress: "Extracting file {done} of {total}…",
+        summary: "{succeeded} of {total} suppliers extracted successfully.",
+      },
     },
     results: {
       heading: "Results",
@@ -314,6 +330,7 @@ const translations = {
       suppliers: "الموردون",
       suppliersAdded: "الموردون المضافون",
       addSupplier: "+ إضافة مورد",
+      loadSample: "تحميل نموذج طلب تسعير",
       saveContinue: "حفظ ومتابعة",
       noSuppliers: "لم تتم إضافة أي موردين بعد.",
       table: {
@@ -334,6 +351,21 @@ const translations = {
       portCityPlaceholder: "مثال: جدة، شنتشن",
       notesPlaceholder: "ملاحظات",
       remove: "إزالة",
+      upload: {
+        heading: "رفع عروض الأسعار (استخراج بالذكاء الاصطناعي)",
+        description:
+          "ارفع ملفات PDF أو صور عروض أسعار الموردين ودع الذكاء الاصطناعي يملأ الجدول أدناه نيابةً عنك — راجع التفاصيل المستخرجة قبل الحفظ.",
+        notConfigured:
+          "لم يتم إعداد الاستخراج بالذكاء الاصطناعي بعد — عيّن VITE_AI_PROXY_URL على رابط الخادم الوسيط المنشور.",
+        dropzone: "انقر لاختيار الملفات أو اسحبها وأفلتها هنا",
+        fileTypes: "PDF أو صورة، حتى {max} ملفات",
+        statusPending: "قيد الانتظار",
+        remove: "إزالة الملف",
+        extractButton: "استخراج الموردين بالذكاء الاصطناعي",
+        extracting: "جارٍ الاستخراج…",
+        progress: "جارٍ استخراج الملف {done} من {total}…",
+        summary: "تم استخراج {succeeded} من {total} موردين بنجاح.",
+      },
     },
     results: {
       heading: "النتائج",

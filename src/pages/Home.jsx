@@ -1,12 +1,19 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { getLatestEvaluation } from "../utils/storage";
+import { MAX_SUPPLIERS } from "./NewEvaluation";
+import QuoteUpload from "../components/QuoteUpload";
 
 const FEATURE_KEYS = ["scoring", "currency", "compliance", "bilingual"];
 
 export default function Home() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const hasHistory = Boolean(getLatestEvaluation());
+
+  const handleSuppliersExtracted = (extractedSuppliers) => {
+    navigate("/new-evaluation", { state: { extractedSuppliers } });
+  };
 
   return (
     <div>
@@ -31,6 +38,14 @@ export default function Home() {
             </Link>
           </div>
         </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 pt-16">
+        <QuoteUpload
+          rfqHeader={null}
+          maxFiles={MAX_SUPPLIERS}
+          onSuppliersExtracted={handleSuppliersExtracted}
+        />
       </section>
 
       <section className="max-w-6xl mx-auto px-6 py-16">

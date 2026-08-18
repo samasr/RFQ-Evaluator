@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import SupplierRow, { CURRENCIES } from "../components/SupplierRow";
+import QuoteUpload from "../components/QuoteUpload";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchExchangeRates } from "../utils/currency";
 import { saveEvaluation } from "../utils/storage";
+import { SAMPLE_RFQ_HEADER, getSampleSuppliers } from "../utils/sampleData";
 
-const MAX_SUPPLIERS = 10;
+export const MAX_SUPPLIERS = 10;
 
 const todayIsoDate = () => new Date().toISOString().slice(0, 10);
 
@@ -30,6 +32,7 @@ const labelClass = "block text-sm font-medium text-navy mb-1";
 
 export default function NewEvaluation() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
 
   const [rfqHeader, setRfqHeader] = useState({
@@ -40,7 +43,21 @@ export default function NewEvaluation() {
     evaluationDate: todayIsoDate(),
   });
 
-  const [suppliers, setSuppliers] = useState([emptySupplier()]);
+  const [suppliers, setSuppliers] = useState(() => {
+    const incoming = location.state?.extractedSuppliers;
+    return Array.isArray(incoming) && incoming.length > 0
+      ? incoming.slice(0, MAX_SUPPLIERS)
+      : [emptySupplier()];
+  });
+
+  // Clear the handoff state once consumed so navigating back here later
+  // (browser back/forward, or a plain link) doesn't re-seed the table.
+  useEffect(() => {
+    if (location.state?.extractedSuppliers) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [fx, setFx] = useState({ status: "idle", rates: null });
 
@@ -78,16 +95,41 @@ export default function NewEvaluation() {
     setSuppliers((prev) => prev.filter((s) => s.id !== id));
   };
 
+  // Extracted suppliers replace any still-blank rows first, then append,
+  // capped at MAX_SUPPLIERS so an upload batch can't overflow the table.
+  const handleSuppliersExtracted = (extractedSuppliers) => {
+    setSuppliers((prev) => {
+      const nonEmpty = prev.filter(
+        (s) => s.name.trim() !== "" || s.unitPrice !== ""
+      );
+      return [...nonEmpty, ...extractedSuppliers].slice(0, MAX_SUPPLIERS);
+    });
+  };
+
   const handleSaveAndContinue = () => {
     const id = saveEvaluation(rfqHeader, suppliers);
     navigate(`/results/${id}`);
   };
 
+  const loadSampleData = () => {
+    setRfqHeader({ ...SAMPLE_RFQ_HEADER });
+    setSuppliers(getSampleSuppliers());
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
-      <h1 className="text-3xl font-bold text-navy mb-8">
-        {t("newEvaluation.heading")}
-      </h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-navy">
+          {t("newEvaluation.heading")}
+        </h1>
+        <button
+          type="button"
+          onClick={loadSampleData}
+          className="text-sm font-medium text-navy border border-navy/30 rounded-md px-3 py-1.5 hover:bg-navy/5 transition-colors"
+        >
+          {t("newEvaluation.loadSample")}
+        </button>
+      </div>
 
       {/* PART A — RFQ Header */}
       <section className="mb-10">
@@ -154,6 +196,12 @@ export default function NewEvaluation() {
           </div>
         </div>
       </section>
+
+      <QuoteUpload
+        rfqHeader={rfqHeader}
+        maxFiles={MAX_SUPPLIERS}
+        onSuppliersExtracted={handleSuppliersExtracted}
+      />
 
       {/* PART B — Supplier Entry Table */}
       <section className="mb-6">
