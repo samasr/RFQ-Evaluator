@@ -1,63 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { rankSuppliers, SCORE_CRITERIA } from "../utils/scoring";
 import { fetchExchangeRates, convertToBase } from "../utils/currency";
 import { useLanguage } from "../context/LanguageContext";
 import { getEvaluation, getLatestEvaluation } from "../utils/storage";
+import { DEFAULT_ASSUMPTIONS, normalizeSuppliers } from "../utils/normalization";
 import NormalizationTable from "../components/NormalizationTable";
-
-function exportToCsv(rfqHeader, rankedSuppliers, baseCurrency, conversionActive) {
-  const headers = [
-    "Rank",
-    "Score",
-    "Supplier",
-    "Country",
-    "Unit Price",
-    "Currency",
-    ...(conversionActive ? [`Price (${baseCurrency})`] : []),
-    "Lead Time (days)",
-    "Payment Terms",
-    "MOQ",
-    "SASO Status",
-    "Delivery Terms",
-    "Notes",
-  ];
-  const csvRows = rankedSuppliers.map((s, i) =>
-    [
-      i + 1,
-      s.score,
-      s.name,
-      s.country,
-      s.unitPriceOriginal,
-      s.currencyOriginal,
-      ...(conversionActive
-        ? [s.unitPrice != null ? Math.round(s.unitPrice * 100) / 100 : ""]
-        : []),
-      s.leadTime,
-      s.paymentTerms,
-      s.moq,
-      s.sasoStatus,
-      s.deliveryTerms,
-      s.notes,
-    ]
-      .map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`)
-      .join(",")
-  );
-  const csvContent = [headers.join(","), ...csvRows].join("\r\n");
-
-  const blob = new Blob(["﻿" + csvContent], {
-    type: "text/csv;charset=utf-8;",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  const fileTitle = rfqHeader?.title?.trim() || "rfq-evaluation";
-  link.download = `${fileTitle.replace(/\s+/g, "-").toLowerCase()}-results.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
 
 function scoreBadgeClass(score) {
   if (score >= 75) return "bg-green-100 text-green-800";
@@ -138,6 +86,11 @@ export default function Results() {
   const needsConversion = suppliers.some((s) => s.currency !== baseCurrency);
 
   const [fx, setFx] = useState({ status: "idle", rates: null, error: null });
+  const [assumptions, setAssumptions] = useState(DEFAULT_ASSUMPTIONS);
+  const normalizedRows = useMemo(
+    () => normalizeSuppliers(suppliers, assumptions),
+    [suppliers, assumptions]
+  );
 
   useEffect(() => {
     if (!needsConversion) {
@@ -200,9 +153,19 @@ export default function Results() {
         <h1 className="text-3xl font-bold text-navy">{t("results.heading")}</h1>
         <button
           type="button"
-          onClick={() =>
-            exportToCsv(rfqHeader, rankedSuppliers, baseCurrency, conversionActive)
-          }
+          onClick={async () => {
+            const { exportEvaluationWorkbook } = await import(
+              "../utils/exportWorkbook"
+            );
+            exportEvaluationWorkbook({
+              rfqHeader,
+              suppliers,
+              rankedSuppliers,
+              normalizedRows,
+              assumptions,
+              t,
+            });
+          }}
           className="bg-gold text-navy px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
         >
           {t("results.exportToExcel")}
@@ -306,7 +269,11 @@ export default function Results() {
         </table>
       </div>
 
-      <NormalizationTable suppliers={suppliers} />
+      <NormalizationTable
+        rows={normalizedRows}
+        assumptions={assumptions}
+        onAssumptionsChange={setAssumptions}
+      />
     </div>
   );
 }

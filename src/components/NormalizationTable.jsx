@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
-import { DEFAULT_ASSUMPTIONS, normalizeSuppliers } from "../utils/normalization";
+import { DEFAULT_ASSUMPTIONS } from "../utils/normalization";
 
 const inputClass =
   "w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy";
@@ -20,15 +20,9 @@ function formatSar(value) {
   return value === null || value === undefined ? "—" : value.toFixed(2);
 }
 
-export default function NormalizationTable({ suppliers }) {
+export default function NormalizationTable({ rows, assumptions, onAssumptionsChange }) {
   const { t } = useLanguage();
-  const [assumptions, setAssumptions] = useState(DEFAULT_ASSUMPTIONS);
   const [panelOpen, setPanelOpen] = useState(false);
-
-  const rows = useMemo(
-    () => normalizeSuppliers(suppliers, assumptions),
-    [suppliers, assumptions]
-  );
 
   const validTotals = rows
     .map((r) => r.totalLanded)
@@ -39,10 +33,10 @@ export default function NormalizationTable({ suppliers }) {
 
   const updateAssumption = (key) => (e) => {
     const value = e.target.value;
-    setAssumptions((prev) => ({
-      ...prev,
+    onAssumptionsChange({
+      ...assumptions,
       [key]: value === "" ? "" : Number(value),
-    }));
+    });
   };
 
   return (
@@ -88,7 +82,7 @@ export default function NormalizationTable({ suppliers }) {
             </div>
             <button
               type="button"
-              onClick={() => setAssumptions(DEFAULT_ASSUMPTIONS)}
+              onClick={() => onAssumptionsChange(DEFAULT_ASSUMPTIONS)}
               className="mt-4 text-sm font-medium text-navy hover:text-gold transition-colors"
             >
               {t("results.normalization.resetDefaults")}
