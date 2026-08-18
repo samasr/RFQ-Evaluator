@@ -1,0 +1,12 @@
+name = "rfq-evaluator-ai-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ANTHROPIC_API_KEY is a secret — set it with:
+#   npx wrangler secret put ANTHROPIC_API_KEY
+# Never put it here; this file is committed to git.
+
+[vars]
+# Comma-separated list of origins allowed to call this proxy.
+ALLOWED_ORIGINS = "https://samasr.github.io,http://localhost:5173,http://localhost:5174"

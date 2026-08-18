@@ -5,7 +5,9 @@ import { fetchExchangeRates, convertToBase } from "../utils/currency";
 import { useLanguage } from "../context/LanguageContext";
 import { getEvaluation, getLatestEvaluation } from "../utils/storage";
 import { DEFAULT_ASSUMPTIONS, normalizeSuppliers } from "../utils/normalization";
+import { CRITERIA_KEYS } from "../utils/aiScoring";
 import NormalizationTable from "../components/NormalizationTable";
+import AIScoringPanel from "../components/AIScoringPanel";
 
 function scoreBadgeClass(score) {
   if (score >= 75) return "bg-green-100 text-green-800";
@@ -13,8 +15,16 @@ function scoreBadgeClass(score) {
   return "bg-red-100 text-red-800";
 }
 
-function ScoreBadge({ score, breakdown }) {
-  const { t } = useLanguage();
+function aiScoreBadgeClass(score) {
+  if (score >= 8) return "bg-green-100 text-green-800";
+  if (score >= 5) return "bg-yellow-100 text-yellow-800";
+  return "bg-red-100 text-red-800";
+}
+
+// Generic tooltip badge shared by the local heuristic score and the AI
+// score — only the displayed number, color thresholds, and breakdown rows
+// differ between the two.
+function Badge({ score, badgeClass, title, rows }) {
   const badgeRef = useRef(null);
   // Positioned via getBoundingClientRect + position:fixed so the tooltip
   // escapes the table's overflow-x-auto wrapper instead of being clipped by it.
@@ -36,9 +46,7 @@ function ScoreBadge({ score, breakdown }) {
         onMouseLeave={hideTooltip}
         onFocus={showTooltip}
         onBlur={hideTooltip}
-        className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold cursor-default focus:outline-none focus:ring-2 focus:ring-navy ${scoreBadgeClass(
-          score
-        )}`}
+        className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold cursor-default focus:outline-none focus:ring-2 focus:ring-navy ${badgeClass}`}
       >
         {score}
       </span>
@@ -53,19 +61,12 @@ function ScoreBadge({ score, breakdown }) {
           }}
           className="z-50 w-60 rounded-md bg-navy text-white text-xs shadow-lg p-3 pointer-events-none"
         >
-          <p className="font-semibold mb-2">
-            {t("results.scoreBreakdown.title")}
-          </p>
+          <p className="font-semibold mb-2">{title}</p>
           <ul className="space-y-1">
-            {SCORE_CRITERIA.map((c) => (
-              <li key={c.key} className="flex justify-between gap-2">
-                <span className="text-white/80">
-                  {t(`results.scoreBreakdown.${c.key}`)} (
-                  {Math.round(c.weight * 100)}%)
-                </span>
-                <span className="font-medium">
-                  {Math.round(breakdown[c.key])}
-                </span>
+            {rows.map((row) => (
+              <li key={row.label} className="flex justify-between gap-2">
+                <span className="text-white/80">{row.label}</span>
+                <span className="font-medium">{row.value}</span>
               </li>
             ))}
           </ul>
@@ -91,6 +92,11 @@ export default function Results() {
     () => normalizeSuppliers(suppliers, assumptions),
     [suppliers, assumptions]
   );
+  const [aiResult, setAiResult] = useState(null);
+
+  useEffect(() => {
+    setAiResult(null);
+  }, [evaluation?.id]);
 
   useEffect(() => {
     if (!needsConversion) {
@@ -146,6 +152,33 @@ export default function Results() {
   const rankedSuppliers = rankSuppliers(suppliersForScoring, {
     annualVolume: rfqHeader?.annualVolume,
   });
+
+  // Once AI scoring has run, the table switches to AI-ranked order; suppliers
+  // Claude didn't return (name mismatch) fall back to the end, keyed by the
+  // local heuristic score so the table never silently drops a row.
+  const aiByName = aiResult
+    ? new Map(aiResult.suppliers.map((s) => [(s.name || "").trim().toLowerCase(), s]))
+    : null;
+  const displaySuppliers = aiByName
+    ? [...rankedSuppliers]
+        .map((s) => {
+          const ai = aiByName.get((s.name || "").trim().toLowerCase());
+          return {
+            ...s,
+            aiScore: ai ? ai.weightedTotal : null,
+            aiScores: ai ? ai.scores : null,
+            isAiWinner:
+              ai && (ai.name || "").trim().toLowerCase() ===
+                (aiResult.winner || "").trim().toLowerCase(),
+          };
+        })
+        .sort((a, b) => {
+          if (a.aiScore == null && b.aiScore == null) return 0;
+          if (a.aiScore == null) return 1;
+          if (b.aiScore == null) return -1;
+          return b.aiScore - a.aiScore;
+        })
+    : rankedSuppliers;
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">
@@ -218,7 +251,14 @@ export default function Results() {
           <thead>
             <tr className="border-b-2 border-navy">
               <th className="py-2 pr-4 text-navy">{t("results.table.rank")}</th>
-              <th className="py-2 pr-4 text-navy">{t("results.table.score")}</th>
+              <th className="py-2 pr-4 text-navy">
+                {t("results.table.score")}
+                {aiByName && (
+                  <span className="ml-1 text-[10px] font-bold text-gold align-top">
+                    AI
+                  </span>
+                )}
+              </th>
               <th className="py-2 pr-4 text-navy">{t("results.table.supplier")}</th>
               <th className="py-2 pr-4 text-navy">{t("results.table.country")}</th>
               <th className="py-2 pr-4 text-navy">{t("results.table.unitPrice")}</th>
@@ -231,13 +271,38 @@ export default function Results() {
             </tr>
           </thead>
           <tbody>
-            {rankedSuppliers.map((s, i) => (
+            {displaySuppliers.map((s, i) => (
               <tr key={s.id} className="border-b border-gray-200">
                 <td className="py-2 pr-4 font-semibold text-navy">{i + 1}</td>
                 <td className="py-2 pr-4">
-                  <ScoreBadge score={s.score} breakdown={s.scoreBreakdown} />
+                  {s.aiScore != null ? (
+                    <Badge
+                      score={s.aiScore}
+                      badgeClass={aiScoreBadgeClass(s.aiScore)}
+                      title={t("results.ai.heading")}
+                      rows={CRITERIA_KEYS.map((key) => ({
+                        label: t(`results.ai.criteria.${key}`),
+                        value: s.aiScores?.[key] ?? "—",
+                      }))}
+                    />
+                  ) : (
+                    <Badge
+                      score={s.score}
+                      badgeClass={scoreBadgeClass(s.score)}
+                      title={t("results.scoreBreakdown.title")}
+                      rows={SCORE_CRITERIA.map((c) => ({
+                        label: `${t(`results.scoreBreakdown.${c.key}`)} (${Math.round(
+                          c.weight * 100
+                        )}%)`,
+                        value: Math.round(s.scoreBreakdown[c.key]),
+                      }))}
+                    />
+                  )}
                 </td>
-                <td className="py-2 pr-4">{s.name || "—"}</td>
+                <td className="py-2 pr-4">
+                  {s.isAiWinner && <span className="mr-1">👑</span>}
+                  {s.name || "—"}
+                </td>
                 <td className="py-2 pr-4">
                   {t(`options.countries.${s.country}`)}
                 </td>
@@ -273,6 +338,12 @@ export default function Results() {
         rows={normalizedRows}
         assumptions={assumptions}
         onAssumptionsChange={setAssumptions}
+      />
+
+      <AIScoringPanel
+        rfqHeader={rfqHeader}
+        normalizedRows={normalizedRows}
+        onResult={setAiResult}
       />
     </div>
   );
