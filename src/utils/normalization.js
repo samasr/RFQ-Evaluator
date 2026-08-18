@@ -7,6 +7,7 @@ export const DEFAULT_ASSUMPTIONS = {
   fxCNY: 0.52,
   fxEUR: 4.1,
   customsPct: 5,
+  vatPct: 15,
   freightJeddah: 0.3, // CIF Jeddah -> Riyadh land freight
   freightDammam: 0.45, // CFR Dammam -> Riyadh land freight
 };
@@ -64,6 +65,14 @@ function resolveCustoms(supplier, sarEquivalent, assumptions) {
   return sarEquivalent * (assumptions.customsPct / 100);
 }
 
+// Saudi VAT (15% standard rate) applies to the delivered value regardless of
+// Incoterm or supplier origin — unlike customs duty, it isn't limited to
+// non-Saudi/non-DDP suppliers. Charged on goods + freight + customs.
+function resolveVat(sarEquivalent, freight, customs, assumptions) {
+  if (sarEquivalent === null || customs === null) return null;
+  return (sarEquivalent + freight + customs) * (assumptions.vatPct / 100);
+}
+
 // Returns suppliers augmented with normalization figures, sorted by total
 // landed cost ascending (nulls, i.e. missing/invalid price, sort last).
 export function normalizeSuppliers(suppliers, assumptions) {
@@ -75,12 +84,13 @@ export function normalizeSuppliers(suppliers, assumptions) {
     const sarEquivalent = price !== null && rate !== null ? price * rate : null;
     const freight = resolveFreight(supplier, assumptions);
     const customs = resolveCustoms(supplier, sarEquivalent, assumptions);
+    const vat = resolveVat(sarEquivalent, freight, customs, assumptions);
     const totalLanded =
-      sarEquivalent !== null && customs !== null
-        ? sarEquivalent + freight + customs
+      sarEquivalent !== null && customs !== null && vat !== null
+        ? sarEquivalent + freight + customs + vat
         : null;
 
-    return { ...supplier, sarEquivalent, freight, customs, totalLanded };
+    return { ...supplier, sarEquivalent, freight, customs, vat, totalLanded };
   });
 
   return rows.sort((a, b) => {

@@ -164,7 +164,7 @@ const translations = {
       normalization: {
         heading: "Landed Cost Normalization",
         description:
-          "Every quote converted to a landed cost in SAR, DDP Riyadh — currency conversion, freight, and customs included — so quotes are compared on the same basis.",
+          "Every quote converted to a landed cost in SAR, DDP Riyadh — currency conversion, freight, customs, and VAT included — so quotes are compared on the same basis.",
         assumptionsTitle: "Normalization Assumptions",
         showAssumptions: "Show Assumptions",
         hideAssumptions: "Hide Assumptions",
@@ -173,6 +173,7 @@ const translations = {
         fxCNY: "CNY → SAR rate",
         fxEUR: "EUR → SAR rate",
         customsPct: "Customs duty %",
+        vatPct: "VAT %",
         freightJeddah: "Freight: Jeddah → Riyadh (SAR)",
         freightDammam: "Freight: Dammam → Riyadh (SAR)",
         bestPrice: "Best Price ✓",
@@ -185,6 +186,7 @@ const translations = {
           sarEquivalent: "SAR Equivalent",
           freight: "Freight (SAR)",
           customs: "Customs (SAR)",
+          vat: "VAT (SAR)",
           totalLanded: "TOTAL LANDED SAR",
           deliveryTerms: "Delivery Terms",
           notes: "Notes",
@@ -354,7 +356,7 @@ const translations = {
       normalization: {
         heading: "تطبيع التكلفة الموصّلة",
         description:
-          "يتم تحويل كل عرض إلى تكلفة موصّلة بالريال السعودي، تسليم DDP الرياض — شاملة تحويل العملة والشحن والجمارك — لمقارنة العروض على نفس الأساس.",
+          "يتم تحويل كل عرض إلى تكلفة موصّلة بالريال السعودي، تسليم DDP الرياض — شاملة تحويل العملة والشحن والجمارك وضريبة القيمة المضافة — لمقارنة العروض على نفس الأساس.",
         assumptionsTitle: "افتراضات التطبيع",
         showAssumptions: "إظهار الافتراضات",
         hideAssumptions: "إخفاء الافتراضات",
@@ -363,6 +365,7 @@ const translations = {
         fxCNY: "سعر اليوان الصيني ← ريال",
         fxEUR: "سعر اليورو ← ريال",
         customsPct: "نسبة الرسوم الجمركية %",
+        vatPct: "ضريبة القيمة المضافة %",
         freightJeddah: "الشحن: جدة ← الرياض (ريال)",
         freightDammam: "الشحن: الدمام ← الرياض (ريال)",
         bestPrice: "أفضل سعر ✓",
@@ -375,6 +378,7 @@ const translations = {
           sarEquivalent: "المعادل بالريال",
           freight: "الشحن (ريال)",
           customs: "الجمارك (ريال)",
+          vat: "ضريبة القيمة المضافة (ريال)",
           totalLanded: "إجمالي التكلفة الموصّلة (ريال)",
           deliveryTerms: "شروط التسليم",
           notes: "ملاحظات",

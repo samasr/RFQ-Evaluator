@@ -11,6 +11,7 @@ const ASSUMPTION_FIELDS = [
   { key: "fxCNY", labelKey: "fxCNY", step: 0.01 },
   { key: "fxEUR", labelKey: "fxEUR", step: 0.01 },
   { key: "customsPct", labelKey: "customsPct", step: 0.1 },
+  { key: "vatPct", labelKey: "vatPct", step: 0.1 },
   { key: "freightJeddah", labelKey: "freightJeddah", step: 0.01 },
   { key: "freightDammam", labelKey: "freightDammam", step: 0.01 },
 ];
@@ -108,6 +109,7 @@ export default function NormalizationTable({ suppliers }) {
               <th className="py-2 px-3 font-medium">{t("results.normalization.table.sarEquivalent")}</th>
               <th className="py-2 px-3 font-medium">{t("results.normalization.table.freight")}</th>
               <th className="py-2 px-3 font-medium">{t("results.normalization.table.customs")}</th>
+              <th className="py-2 px-3 font-medium">{t("results.normalization.table.vat")}</th>
               <th className="py-2 px-3 font-medium">{t("results.normalization.table.totalLanded")}</th>
               <th className="py-2 px-3 font-medium">{t("results.normalization.table.deliveryTerms")}</th>
               <th className="py-2 px-3 font-medium">{t("results.normalization.table.notes")}</th>
@@ -143,6 +145,7 @@ export default function NormalizationTable({ suppliers }) {
                   <td className="py-2 px-3 whitespace-nowrap">{formatSar(row.sarEquivalent)}</td>
                   <td className="py-2 px-3 whitespace-nowrap">{formatSar(row.freight)}</td>
                   <td className="py-2 px-3 whitespace-nowrap">{formatSar(row.customs)}</td>
+                  <td className="py-2 px-3 whitespace-nowrap">{formatSar(row.vat)}</td>
                   <td className="py-2 px-3 font-semibold text-navy whitespace-nowrap">
                     {formatSar(row.totalLanded)}
                   </td>
