@@ -20,6 +20,7 @@ function AppShell() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/new-evaluation" element={<NewEvaluation />} />
           <Route path="/results" element={<Results />} />
+          <Route path="/results/:id" element={<Results />} />
         </Routes>
       </main>
 

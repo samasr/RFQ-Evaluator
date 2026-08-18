@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import SupplierRow, { CURRENCIES } from "../components/SupplierRow";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchExchangeRates } from "../utils/currency";
+import { saveEvaluation } from "../utils/storage";
 
 const MAX_SUPPLIERS = 10;
 
@@ -19,6 +20,7 @@ const emptySupplier = () => ({
   moq: "",
   sasoStatus: "Not stated",
   deliveryTerms: "DDP",
+  portCity: "",
   notes: "",
 });
 
@@ -77,11 +79,8 @@ export default function NewEvaluation() {
   };
 
   const handleSaveAndContinue = () => {
-    localStorage.setItem(
-      "rfqEvaluation",
-      JSON.stringify({ rfqHeader, suppliers })
-    );
-    navigate("/results");
+    const id = saveEvaluation(rfqHeader, suppliers);
+    navigate(`/results/${id}`);
   };
 
   return (
@@ -203,6 +202,9 @@ export default function NewEvaluation() {
                   {t("newEvaluation.table.deliveryTerms")}
                 </th>
                 <th className="py-2 px-2 font-medium">
+                  {t("newEvaluation.table.portCity")}
+                </th>
+                <th className="py-2 px-2 font-medium">
                   {t("newEvaluation.table.notes")}
                 </th>
                 <th className="py-2 px-2 font-medium"></th>
@@ -222,7 +224,7 @@ export default function NewEvaluation() {
               ))}
               {suppliers.length === 0 && (
                 <tr>
-                  <td colSpan={12} className="py-6 text-center text-sm text-gray-500">
+                  <td colSpan={13} className="py-6 text-center text-sm text-gray-500">
                     {t("newEvaluation.noSuppliers")}
                   </td>
                 </tr>

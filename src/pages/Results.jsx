@@ -1,17 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { rankSuppliers, SCORE_CRITERIA } from "../utils/scoring";
 import { fetchExchangeRates, convertToBase } from "../utils/currency";
 import { useLanguage } from "../context/LanguageContext";
-
-function loadEvaluation() {
-  try {
-    const raw = localStorage.getItem("rfqEvaluation");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
+import { getEvaluation, getLatestEvaluation } from "../utils/storage";
+import NormalizationTable from "../components/NormalizationTable";
 
 function exportToCsv(rfqHeader, rankedSuppliers, baseCurrency, conversionActive) {
   const headers = [
@@ -136,7 +129,8 @@ function ScoreBadge({ score, breakdown }) {
 
 export default function Results() {
   const { t } = useLanguage();
-  const evaluation = loadEvaluation();
+  const { id } = useParams();
+  const evaluation = id ? getEvaluation(id) : getLatestEvaluation();
   const rfqHeader = evaluation?.rfqHeader;
   const suppliers = evaluation?.suppliers ?? [];
   const baseCurrency = rfqHeader?.baseCurrency || "SAR";
@@ -311,6 +305,8 @@ export default function Results() {
           </tbody>
         </table>
       </div>
+
+      <NormalizationTable suppliers={suppliers} />
     </div>
   );
 }

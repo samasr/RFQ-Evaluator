@@ -143,6 +143,15 @@ export default function SupplierRow({
       <td className="py-2 pr-2">
         <input
           type="text"
+          value={supplier.portCity ?? ""}
+          onChange={set("portCity")}
+          placeholder={t("newEvaluation.portCityPlaceholder")}
+          className={inputClass}
+        />
+      </td>
+      <td className="py-2 pr-2">
+        <input
+          type="text"
           value={supplier.notes}
           onChange={set("notes")}
           placeholder={t("newEvaluation.notesPlaceholder")}
