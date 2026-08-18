@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider, useLanguage } from "./context/LanguageContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -32,9 +32,9 @@ function AppShell() {
 function App() {
   return (
     <LanguageProvider>
-      <BrowserRouter>
+      <HashRouter>
         <AppShell />
-      </BrowserRouter>
+      </HashRouter>
     </LanguageProvider>
   );
 }
