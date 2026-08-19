@@ -79,12 +79,6 @@ export default function DecisionMemoPanel({ rfqHeader, normalizedRows, aiResult 
     }
   };
 
-  const mailtoHref = memo
-    ? `mailto:?subject=${encodeURIComponent(
-        t("results.memo.emailSubject", { title: rfqHeader?.title || "" })
-      )}&body=${encodeURIComponent(plainTextMemo())}`
-    : "#";
-
   return (
     <section className="mt-10">
       <div className="flex items-center justify-between mb-4">
@@ -319,12 +313,6 @@ export default function DecisionMemoPanel({ rfqHeader, normalizedRows, aiResult 
             >
               {copied ? t("results.memo.copied") : t("results.memo.copyClipboard")}
             </button>
-            <a
-              href={mailtoHref}
-              className="bg-white text-navy border border-navy px-4 py-2 rounded-md text-sm font-semibold hover:bg-navy/5 transition-colors inline-block"
-            >
-              {t("results.memo.emailMemo")}
-            </a>
           </div>
         </>
       )}
