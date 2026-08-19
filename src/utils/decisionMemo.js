@@ -1,5 +1,9 @@
 // Client for the Cloudflare Worker AI proxy (see /worker) — turns a
 // completed AI scoring result into a bilingual procurement decision memo.
+//
+// Claude returns structured JSON (not free-text with embedded markdown
+// tables) so the UI can render real tables and keep the memo tight enough
+// for a senior-leadership skim rather than a wall of prose.
 
 function buildSupplierData(normalizedRows, aiResult) {
   const aiByName = new Map(
@@ -25,64 +29,40 @@ function buildSupplierData(normalizedRows, aiResult) {
   });
 }
 
+const MEMO_SHAPE = `{
+  "subject": string ("Supplier Selection — <RFQ title>"),
+  "executiveSummary": string (max 2 sentences — who was selected, why, key benefit),
+  "methodology": [ { "criterion": string, "weight": string (e.g. "30%") } ] (5-6 rows, no extra commentary),
+  "topSuppliers": [ { "rank": number, "supplier": string, "landedCostSAR": string, "score": string, "keyStrength": string (max 6 words) } ] (top 3 only),
+  "rationale": string (max 2 sentences — why the winner beat the runner-up),
+  "risks": [ { "risk": string (one short clause), "mitigation": string (one short clause) } ] (max 2 items),
+  "nextSteps": [ string ] (3-4 short imperative bullets, no sub-clauses)
+}`;
+
 export function buildMemoPrompt({ rfqHeader, normalizedRows, aiResult }) {
   const supplierData = buildSupplierData(normalizedRows, aiResult);
 
-  return `You are a senior procurement consultant writing a formal decision memo for management review at a Saudi company.
+  return `You are a senior procurement consultant writing a 1-page decision memo for a company's executive leadership. They skim, they do not read — every field must be as short as possible while staying specific (use real numbers and names, never vague filler like "various factors").
 
-Write a professional 1-page decision memo in BOTH English and Arabic.
+Write the memo in BOTH English and Arabic, each following this exact JSON shape:
+${MEMO_SHAPE}
 
-Structure the memo exactly like this:
-
-ENGLISH VERSION:
-- Header: PROCUREMENT DECISION MEMO
-- To: Procurement Director
-- From: Procurement Planning Team
-- Date: ${rfqHeader?.evaluationDate || "[today's date]"}
-- Subject: Supplier Selection — ${rfqHeader?.title || "[RFQ Title]"}
-
-1. EXECUTIVE SUMMARY (2-3 sentences)
-   Who was selected, why, and the key benefit
-
-2. EVALUATION METHODOLOGY
-   Criteria used and weights (table format)
-
-3. TOP 3 SUPPLIERS COMPARISON (table)
-   Rank | Supplier | Landed Cost SAR | Score | Key Strength
-
-4. SELECTION RATIONALE
-   Why the winner was chosen over the runner-up (3-4 sentences)
-
-5. RISKS & MITIGATION
-   2-3 bullet points of risks and how to handle them
-
-6. RECOMMENDED NEXT STEPS
-   - Notify selected supplier within 2 working days
-   - Request SASO certificate verification
-   - Issue PO after payment terms confirmation
-   - Schedule quality inspection before first delivery
-
-ARABIC VERSION:
-Full translation of the above memo in Arabic (RTL)
-
-Return ONLY valid JSON, no explanation, no markdown fences, in this exact shape:
+Return ONLY valid JSON, no explanation, no markdown fences, in this exact top-level shape:
 {
-  "english": string (full memo in English, use \\n for line breaks),
-  "arabic": string (full memo in Arabic, use \\n for line breaks),
+  "english": ${MEMO_SHAPE},
+  "arabic": ${MEMO_SHAPE} (all string values translated to Arabic; numbers stay numerals),
   "winner": string,
   "winnerScore": number,
-  "keyReason": string (one sentence)
+  "keyReason": string (one short sentence, the single biggest reason the winner was chosen)
 }
+
+Context:
+- RFQ title: ${rfqHeader?.title || "[RFQ Title]"}
+- Memo date: ${rfqHeader?.evaluationDate || "[today's date]"}
+- Product: ${rfqHeader?.product || "unspecified"}
 
 Evaluation data: ${JSON.stringify(
     {
-      rfqHeader: {
-        title: rfqHeader?.title || "",
-        product: rfqHeader?.product || "",
-        annualVolume: rfqHeader?.annualVolume || "",
-        baseCurrency: rfqHeader?.baseCurrency || "SAR",
-        evaluationDate: rfqHeader?.evaluationDate || "",
-      },
       aiSummary: aiResult?.summary || "",
       aiWinner: aiResult?.winner || "",
       suppliers: supplierData,
@@ -98,6 +78,17 @@ function extractJson(text) {
   return JSON.parse(fenced ? fenced[1] : trimmed);
 }
 
+function isValidMemoSide(side) {
+  return (
+    side &&
+    typeof side.executiveSummary === "string" &&
+    Array.isArray(side.methodology) &&
+    Array.isArray(side.topSuppliers) &&
+    Array.isArray(side.risks) &&
+    Array.isArray(side.nextSteps)
+  );
+}
+
 export async function generateDecisionMemo({ rfqHeader, normalizedRows, aiResult, proxyUrl }) {
   if (!proxyUrl) {
     throw new Error("AI memo generation isn't configured yet (no proxy URL set).");
@@ -108,7 +99,7 @@ export async function generateDecisionMemo({ rfqHeader, normalizedRows, aiResult
   const response = await fetch(proxyUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, maxTokens: 8192 }),
+    body: JSON.stringify({ prompt, maxTokens: 4096 }),
   });
 
   const data = await response.json().catch(() => null);
@@ -124,9 +115,39 @@ export async function generateDecisionMemo({ rfqHeader, normalizedRows, aiResult
     throw new Error("Claude's response wasn't valid JSON.");
   }
 
-  if (!parsed || typeof parsed.english !== "string" || typeof parsed.arabic !== "string") {
+  if (!isValidMemoSide(parsed?.english) || !isValidMemoSide(parsed?.arabic)) {
     throw new Error("Unexpected response shape from Claude.");
   }
 
   return parsed;
+}
+
+// Flattens the structured memo into plain text for the clipboard/email
+// export paths, which can't render the HTML tables the on-screen view uses.
+export function formatMemoAsPlainText(memo, labels) {
+  const lines = [];
+  lines.push(labels.subjectPrefix ? `${labels.subjectPrefix}: ${memo.subject}` : memo.subject);
+  lines.push("");
+  lines.push(labels.executiveSummaryHeading);
+  lines.push(memo.executiveSummary);
+  lines.push("");
+  lines.push(labels.methodologyHeading);
+  memo.methodology.forEach((row) => lines.push(`- ${row.criterion}: ${row.weight}`));
+  lines.push("");
+  lines.push(labels.topSuppliersHeading);
+  memo.topSuppliers.forEach((row) =>
+    lines.push(
+      `${row.rank}. ${row.supplier} — ${row.landedCostSAR} SAR, ${labels.scoreLabel} ${row.score} — ${row.keyStrength}`
+    )
+  );
+  lines.push("");
+  lines.push(labels.rationaleHeading);
+  lines.push(memo.rationale);
+  lines.push("");
+  lines.push(labels.risksHeading);
+  memo.risks.forEach((row) => lines.push(`- ${row.risk} → ${row.mitigation}`));
+  lines.push("");
+  lines.push(labels.nextStepsHeading);
+  memo.nextSteps.forEach((step) => lines.push(`- ${step}`));
+  return lines.join("\n");
 }
