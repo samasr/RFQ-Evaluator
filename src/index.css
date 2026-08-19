@@ -6,3 +6,26 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Decision memo PDF export: hide everything except the memo document itself. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .memo-print-area,
+  .memo-print-area * {
+    visibility: visible;
+  }
+  .memo-print-area {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    box-shadow: none;
+    border: none;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

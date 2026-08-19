@@ -8,6 +8,7 @@ import { DEFAULT_ASSUMPTIONS, normalizeSuppliers } from "../utils/normalization"
 import { CRITERIA_KEYS } from "../utils/aiScoring";
 import NormalizationTable from "../components/NormalizationTable";
 import AIScoringPanel from "../components/AIScoringPanel";
+import DecisionMemoPanel from "../components/DecisionMemoPanel";
 
 function scoreBadgeClass(score) {
   if (score >= 75) return "bg-green-100 text-green-800";
@@ -344,6 +345,12 @@ export default function Results() {
         rfqHeader={rfqHeader}
         normalizedRows={normalizedRows}
         onResult={setAiResult}
+      />
+
+      <DecisionMemoPanel
+        rfqHeader={rfqHeader}
+        normalizedRows={normalizedRows}
+        aiResult={aiResult}
       />
     </div>
   );
