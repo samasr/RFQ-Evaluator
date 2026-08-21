@@ -8,10 +8,8 @@ const PROBLEM_KEYS = ["formats", "currency", "time"];
 const STEP_KEYS = ["enter", "normalize", "score", "memo"];
 const FEATURE_ITEM_KEYS = ["scoring", "currency", "compliance", "memo", "arabic", "history"];
 const PRICING_KEYS = ["free", "pro", "team"];
-const TESTIMONIAL_KEYS = ["fmcg", "industrial", "logistics"];
 const PRICING_HIGHLIGHT = { free: false, pro: true, team: false };
 const CONTACT_EMAIL = "sales@rfqevaluator.com";
-const STARS = "⭐⭐⭐⭐⭐";
 
 function scrollToId(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -262,43 +260,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION 7 — Social Proof */}
-      <section className="bg-white">
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <FadeInSection>
-            <h2 className="text-3xl font-bold text-navy text-center mb-12">
-              {t("home.testimonials.heading")}
-            </h2>
-          </FadeInSection>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {TESTIMONIAL_KEYS.map((key) => (
-              <FadeInSection key={key}>
-                <div className="h-full border border-gray-200 rounded-lg p-6 flex flex-col">
-                  <span className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold mb-3">
-                    {t("home.testimonials.placeholderNote")}
-                  </span>
-                  <p className="text-gray-700 italic flex-1 mb-4">
-                    “{t(`home.testimonials.items.${key}.quote`)}”
-                  </p>
-                  <span aria-hidden="true" className="text-sm mb-2 tracking-wide">
-                    {STARS}
-                  </span>
-                  <div className="text-sm">
-                    <p className="font-semibold text-navy">
-                      {t(`home.testimonials.items.${key}.author`)}
-                    </p>
-                    <p className="text-gray-500">
-                      {t(`home.testimonials.items.${key}.org`)}
-                    </p>
-                  </div>
-                </div>
-              </FadeInSection>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 8 — Final CTA */}
+      {/* SECTION 7 — Final CTA */}
       <section className="bg-gold">
         <div className="max-w-3xl mx-auto px-6 py-24 text-center">
           <FadeInSection>

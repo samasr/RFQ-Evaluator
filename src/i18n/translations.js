@@ -200,27 +200,6 @@ const translations = {
           },
         },
       },
-      testimonials: {
-        heading: "Trusted Across the Kingdom",
-        placeholderNote: "[PLACEHOLDER]",
-        items: {
-          fmcg: {
-            quote: "We cut our RFQ evaluation time from 3 days to 4 hours.",
-            author: "Procurement Manager",
-            org: "FMCG Company, Riyadh",
-          },
-          industrial: {
-            quote: "Finally a tool that handles SASO compliance in the scoring.",
-            author: "Supply Chain Director",
-            org: "Industrial Group, Jeddah",
-          },
-          logistics: {
-            quote: "The Arabic memo saved us hours of translation work.",
-            author: "Purchasing Lead",
-            org: "Logistics Company, Dammam",
-          },
-        },
-      },
       finalCta: {
         heading: "Ready to Evaluate Your Next RFQ?",
         subheading:
@@ -626,27 +605,6 @@ const translations = {
               "معايير تقييم مخصّصة",
             ],
             cta: "تواصل معنا",
-          },
-        },
-      },
-      testimonials: {
-        heading: "موثوق به في جميع أنحاء المملكة",
-        placeholderNote: "[نموذج]",
-        items: {
-          fmcg: {
-            quote: "اختصرنا وقت تقييم طلبات التسعير من 3 أيام إلى 4 ساعات.",
-            author: "مدير مشتريات",
-            org: "شركة سلع استهلاكية، الرياض",
-          },
-          industrial: {
-            quote: "أخيرًا أداة تُدمج الامتثال لسيسو ضمن التقييم.",
-            author: "مدير سلسلة الإمداد",
-            org: "مجموعة صناعية، جدة",
-          },
-          logistics: {
-            quote: "المذكرة بالعربية وفّرت علينا ساعات من الترجمة.",
-            author: "مسؤول مشتريات",
-            org: "شركة لوجستية، الدمام",
           },
         },
       },
