@@ -8,6 +8,9 @@ const translations = {
     },
     footer: {
       rights: "All rights reserved.",
+      byline: "AI-powered supplier evaluation for GCC businesses.",
+      tagline: "Built for GCC Businesses.",
+      linkPricing: "Pricing",
     },
     // Currency codes (SAR/USD/CNY/EUR) and Incoterms (DDP/FOB/etc.) are
     // universal codes and stay unlocalized; only these value-labeled option
@@ -37,33 +40,196 @@ const translations = {
       },
     },
     home: {
-      heading: "RFQ Evaluator",
-      tagline:
-        "Compare supplier quotes side by side with weighted scoring, live currency conversion, and SASO/ISO compliance built in.",
-      startEvaluation: "Start New Evaluation",
-      viewDashboard: "View Dashboard",
-      learnMore: "See How It Works",
-      features: {
-        scoring: {
-          title: "Weighted Scoring",
-          description:
-            "Rank suppliers on price, lead time, compliance, payment terms, and MOQ fit — not price alone.",
+      hero: {
+        headline: "Evaluate Any Supplier Quote — Faster and Smarter",
+        subheadline:
+          "AI-powered RFQ evaluation for Saudi & GCC businesses. Compare suppliers fairly, score automatically, and generate boardroom-ready decision memos — in any industry.",
+        ctaPrimary: "Start Free Evaluation",
+        ctaSecondary: "See How It Works",
+      },
+      industries: {
+        heading: "Built for Every Industry That Buys from Suppliers",
+        footnote:
+          "If your business receives supplier quotes — RFQ Evaluator is built for you.",
+        items: {
+          procurement: {
+            icon: "🏭",
+            name: "Procurement & Supply Chain",
+            description:
+              "Normalize multi-currency quotes and rank suppliers on price, lead time, and SASO compliance",
+          },
+          construction: {
+            icon: "🏗️",
+            name: "Construction & Contracting",
+            description:
+              "Compare contractor bids and material suppliers with weighted scoring across cost, timeline, and quality",
+          },
+          government: {
+            icon: "🏛️",
+            name: "Government & Tenders",
+            description:
+              "Structure tender evaluations with full audit trails and bilingual Arabic/English documentation",
+          },
+          logistics: {
+            icon: "🚛",
+            name: "Logistics & Warehousing",
+            description:
+              "Evaluate 3PL providers and equipment suppliers on cost, capacity, and compliance",
+          },
+          manufacturing: {
+            icon: "⚙️",
+            name: "Manufacturing & Industrial",
+            description:
+              "Score raw material and component suppliers on landed cost, MOQ, and certifications",
+          },
         },
-        currency: {
-          title: "Live Currency Conversion",
-          description:
-            "Quotes in different currencies are converted to your base currency automatically for a fair comparison.",
+      },
+      problem: {
+        heading: "Sound familiar?",
+        solvedSuffix: "RFQ Evaluator solves this in under 4 hours.",
+        cards: {
+          formats: {
+            icon: "🗂️",
+            text: "Quotes arrive in different formats — Excel, PDF, WhatsApp, email — impossible to compare",
+          },
+          currency: {
+            icon: "💱",
+            text: "Prices in SAR, USD, CNY — no fair way to compare without manual conversion",
+          },
+          time: {
+            icon: "⏰",
+            text: "Evaluation takes days. The board needs a decision by Sunday.",
+          },
         },
-        compliance: {
-          title: "SASO/ISO Compliance",
-          description:
-            "Track each supplier's certification status as part of the evaluation, not an afterthought.",
+      },
+      howItWorks: {
+        heading: "How It Works",
+        steps: {
+          enter: {
+            icon: "📥",
+            title: "Enter Quotes",
+            description: "From any supplier, any format, any currency",
+          },
+          normalize: {
+            icon: "🔢",
+            title: "Auto-Normalize",
+            description: "All prices converted to your base currency",
+          },
+          score: {
+            icon: "🤖",
+            title: "AI Scores & Ranks",
+            description: "Weighted scoring across 6 criteria",
+          },
+          memo: {
+            icon: "📄",
+            title: "Generate Memo",
+            description: "Professional decision document in English & Arabic",
+          },
         },
-        bilingual: {
-          title: "Arabic & English",
-          description:
-            "Full bilingual interface with right-to-left layout, so the whole team can use it.",
+      },
+      featuresGrid: {
+        heading: "Everything You Need to Make Better Supplier Decisions",
+        items: {
+          scoring: {
+            icon: "⚖️",
+            title: "Weighted Scoring",
+            description:
+              "Rank suppliers on price, lead time, compliance, payment terms, MOQ — not price alone",
+          },
+          currency: {
+            icon: "💱",
+            title: "Multi-Currency Normalization",
+            description: "SAR, USD, CNY, EUR — all converted to landed cost automatically",
+          },
+          compliance: {
+            icon: "🏅",
+            title: "Compliance Tracking",
+            description: "SASO, ISO, and custom certifications tracked in every evaluation",
+          },
+          memo: {
+            icon: "📄",
+            title: "AI Decision Memo",
+            description: "Boardroom-ready memo generated in English and Arabic with one click",
+          },
+          arabic: {
+            icon: "🌐",
+            title: "Full Arabic Support",
+            description: "Complete RTL interface — your whole team can use it",
+          },
+          history: {
+            icon: "📊",
+            title: "Evaluation History",
+            description: "Track all your RFQs and supplier decisions in one dashboard",
+          },
         },
+      },
+      pricing: {
+        heading: "Simple, Transparent Pricing",
+        period: "/ month",
+        mostPopular: "Most Popular",
+        contactSubject: "Team Plan Inquiry — RFQ Evaluator",
+        plans: {
+          free: {
+            name: "Free",
+            price: "SAR 0",
+            features: [
+              "1 evaluation per month",
+              "Up to 5 suppliers per evaluation",
+              "PDF export",
+              "English & Arabic",
+            ],
+            cta: "Start Free",
+          },
+          pro: {
+            name: "Pro",
+            price: "SAR 299",
+            features: [
+              "Unlimited evaluations",
+              "Up to 10 suppliers",
+              "AI scoring + memo generation",
+              "Priority support",
+            ],
+            cta: "Start Pro Trial",
+          },
+          team: {
+            name: "Team",
+            price: "SAR 799",
+            features: [
+              "Everything in Pro",
+              "Up to 5 team members",
+              "Shared evaluation history",
+              "Custom scoring criteria",
+            ],
+            cta: "Contact Us",
+          },
+        },
+      },
+      testimonials: {
+        heading: "Trusted by Procurement & Operations Teams Across the Kingdom",
+        placeholderNote: "Placeholder testimonial",
+        items: {
+          fmcg: {
+            quote: "We cut our RFQ evaluation time from 3 days to 4 hours.",
+            author: "Procurement Manager",
+            org: "FMCG Company, Riyadh",
+          },
+          industrial: {
+            quote: "Finally a tool that handles SASO compliance in the scoring.",
+            author: "Supply Chain Director",
+            org: "Industrial Group, Jeddah",
+          },
+          logistics: {
+            quote: "The Arabic memo saved us hours of translation work.",
+            author: "Purchasing Lead",
+            org: "Logistics Company, Dammam",
+          },
+        },
+      },
+      finalCta: {
+        heading: "Ready to Evaluate Your Next RFQ?",
+        subheading:
+          "Join businesses across Saudi Arabia using AI to make smarter supplier decisions.",
+        cta: "Start Your Free Evaluation →",
       },
     },
     dashboard: {
@@ -280,6 +446,9 @@ const translations = {
     },
     footer: {
       rights: "جميع الحقوق محفوظة.",
+      byline: "تقييم موردين مدعوم بالذكاء الاصطناعي للشركات في دول الخليج.",
+      tagline: "صُمم للشركات في دول الخليج.",
+      linkPricing: "الأسعار",
     },
     options: {
       countries: {
@@ -306,33 +475,194 @@ const translations = {
       },
     },
     home: {
-      heading: "مقيّم طلبات التسعير",
-      tagline:
-        "قارن عروض الموردين جنبًا إلى جنب بتقييم مرجّح، وتحويل عملات حي، ومتابعة الامتثال لسيسو/الآيزو.",
-      startEvaluation: "بدء تقييم جديد",
-      viewDashboard: "عرض لوحة التحكم",
-      learnMore: "تعرّف على طريقة العمل",
-      features: {
-        scoring: {
-          title: "تقييم مرجّح",
-          description:
-            "رتّب الموردين بناءً على السعر، مدة التسليم، الامتثال، شروط الدفع، وملاءمة الحد الأدنى للطلب — لا السعر وحده.",
+      hero: {
+        headline: "قيّم عروض الموردين بذكاء وسرعة",
+        subheadline: "منصة تقييم العروض بالذكاء الاصطناعي للشركات السعودية وشركات الخليج",
+        ctaPrimary: "ابدأ تقييمًا مجانيًا",
+        ctaSecondary: "تعرّف على طريقة العمل",
+      },
+      industries: {
+        heading: "مصمم لكل قطاع يشتري من الموردين",
+        footnote: "إذا كانت منشأتك تستقبل عروض أسعار من الموردين — فإن مقيّم طلبات التسعير مصمم لك.",
+        items: {
+          procurement: {
+            icon: "🏭",
+            name: "المشتريات وسلسلة الإمداد",
+            description:
+              "توحيد عروض الأسعار متعددة العملات وترتيب الموردين حسب السعر ومدة التسليم والامتثال لسيسو",
+          },
+          construction: {
+            icon: "🏗️",
+            name: "الإنشاءات والمقاولات",
+            description:
+              "قارن عروض المقاولين وموردي المواد بتقييم مرجّح عبر التكلفة والجدول الزمني والجودة",
+          },
+          government: {
+            icon: "🏛️",
+            name: "الجهات الحكومية والمناقصات",
+            description:
+              "نظّم تقييم المناقصات بمسار تدقيق كامل ووثائق ثنائية اللغة عربي/إنجليزي",
+          },
+          logistics: {
+            icon: "🚛",
+            name: "الخدمات اللوجستية والمستودعات",
+            description:
+              "قيّم مزودي الخدمات اللوجستية وموردي المعدات من حيث التكلفة والطاقة الاستيعابية والامتثال",
+          },
+          manufacturing: {
+            icon: "⚙️",
+            name: "التصنيع والصناعة",
+            description:
+              "قيّم موردي المواد الخام والمكونات بناءً على التكلفة الموصّلة، الحد الأدنى للطلب، والشهادات",
+          },
         },
-        currency: {
-          title: "تحويل عملات حي",
-          description:
-            "يتم تحويل الأسعار بعملات مختلفة إلى عملتك الأساسية تلقائيًا لمقارنة عادلة.",
+      },
+      problem: {
+        heading: "يبدو هذا مألوفًا؟",
+        solvedSuffix: "يحل مقيّم طلبات التسعير هذا خلال أقل من 4 ساعات.",
+        cards: {
+          formats: {
+            icon: "🗂️",
+            text: "تصل عروض الأسعار بصيغ مختلفة — إكسل، PDF، واتساب، بريد إلكتروني — يستحيل مقارنتها",
+          },
+          currency: {
+            icon: "💱",
+            text: "أسعار بالريال والدولار واليوان — لا طريقة عادلة للمقارنة دون تحويل يدوي",
+          },
+          time: {
+            icon: "⏰",
+            text: "التقييم يستغرق أيامًا. المجلس يحتاج قرارًا بحلول الأحد.",
+          },
         },
-        compliance: {
-          title: "الامتثال لسيسو/الآيزو",
-          description:
-            "تتبّع حالة شهادات كل مورد كجزء أساسي من التقييم.",
+      },
+      howItWorks: {
+        heading: "كيف يعمل",
+        steps: {
+          enter: {
+            icon: "📥",
+            title: "أدخل العروض",
+            description: "من أي مورد، بأي صيغة، بأي عملة",
+          },
+          normalize: {
+            icon: "🔢",
+            title: "توحيد تلقائي",
+            description: "تحويل جميع الأسعار إلى عملتك الأساسية",
+          },
+          score: {
+            icon: "🤖",
+            title: "تقييم وترتيب بالذكاء الاصطناعي",
+            description: "تقييم مرجّح عبر 6 معايير",
+          },
+          memo: {
+            icon: "📄",
+            title: "إنشاء المذكرة",
+            description: "مستند قرار احترافي بالعربية والإنجليزية",
+          },
         },
-        bilingual: {
-          title: "عربي وإنجليزي",
-          description:
-            "واجهة ثنائية اللغة بالكامل مع تخطيط من اليمين لليسار، ليستخدمها الفريق بأكمله.",
+      },
+      featuresGrid: {
+        heading: "كل ما تحتاجه لاتخاذ قرارات موردين أفضل",
+        items: {
+          scoring: {
+            icon: "⚖️",
+            title: "تقييم مرجّح",
+            description:
+              "رتّب الموردين حسب السعر، مدة التسليم، الامتثال، شروط الدفع، الحد الأدنى للطلب — لا السعر وحده",
+          },
+          currency: {
+            icon: "💱",
+            title: "توحيد متعدد العملات",
+            description: "الريال والدولار واليوان واليورو — تُحوّل جميعها تلقائيًا إلى التكلفة الموصّلة",
+          },
+          compliance: {
+            icon: "🏅",
+            title: "متابعة الامتثال",
+            description: "تتبّع شهادات سيسو والآيزو والشهادات المخصصة في كل تقييم",
+          },
+          memo: {
+            icon: "📄",
+            title: "مذكرة قرار بالذكاء الاصطناعي",
+            description: "مذكرة جاهزة لمجلس الإدارة بالعربية والإنجليزية بضغطة واحدة",
+          },
+          arabic: {
+            icon: "🌐",
+            title: "دعم كامل للغة العربية",
+            description: "واجهة كاملة من اليمين لليسار — يستخدمها فريقك بأكمله",
+          },
+          history: {
+            icon: "📊",
+            title: "سجل التقييمات",
+            description: "تابع جميع طلبات التسعير وقرارات الموردين في لوحة تحكم واحدة",
+          },
         },
+      },
+      pricing: {
+        heading: "أسعار بسيطة وشفافة",
+        period: "/ شهريًا",
+        mostPopular: "الأكثر طلبًا",
+        contactSubject: "استفسار عن باقة الفريق — RFQ Evaluator",
+        plans: {
+          free: {
+            name: "مجاني",
+            price: "0 ريال",
+            features: [
+              "تقييم واحد شهريًا",
+              "حتى 5 موردين لكل تقييم",
+              "تصدير PDF",
+              "عربي وإنجليزي",
+            ],
+            cta: "ابدأ مجانًا",
+          },
+          pro: {
+            name: "احترافي",
+            price: "299 ريال",
+            features: [
+              "تقييمات غير محدودة",
+              "حتى 10 موردين",
+              "تقييم بالذكاء الاصطناعي وإنشاء المذكرات",
+              "دعم ذو أولوية",
+            ],
+            cta: "ابدأ التجربة الاحترافية",
+          },
+          team: {
+            name: "فريق",
+            price: "799 ريال",
+            features: [
+              "كل ما في الباقة الاحترافية",
+              "حتى 5 أعضاء فريق",
+              "سجل تقييمات مشترك",
+              "معايير تقييم مخصّصة",
+            ],
+            cta: "تواصل معنا",
+          },
+        },
+      },
+      testimonials: {
+        heading: "موثوق به من فرق المشتريات والعمليات في جميع أنحاء المملكة",
+        placeholderNote: "شهادة نموذجية",
+        items: {
+          fmcg: {
+            quote: "اختصرنا وقت تقييم طلبات التسعير من 3 أيام إلى 4 ساعات.",
+            author: "مدير مشتريات",
+            org: "شركة سلع استهلاكية، الرياض",
+          },
+          industrial: {
+            quote: "أخيرًا أداة تُدمج الامتثال لسيسو ضمن التقييم.",
+            author: "مدير سلسلة الإمداد",
+            org: "مجموعة صناعية، جدة",
+          },
+          logistics: {
+            quote: "المذكرة بالعربية وفّرت علينا ساعات من الترجمة.",
+            author: "مسؤول مشتريات",
+            org: "شركة لوجستية، الدمام",
+          },
+        },
+      },
+      finalCta: {
+        heading: "جاهز لتقييم طلب التسعير القادم؟",
+        subheading:
+          "انضم إلى الشركات في جميع أنحاء السعودية التي تستخدم الذكاء الاصطناعي لاتخاذ قرارات موردين أذكى.",
+        cta: "ابدأ تقييمك المجاني ←",
       },
     },
     dashboard: {
