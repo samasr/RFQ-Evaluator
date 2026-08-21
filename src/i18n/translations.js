@@ -43,7 +43,7 @@ const translations = {
       hero: {
         headline: "Evaluate Any Supplier Quote — Faster and Smarter",
         subheadline:
-          "AI-powered RFQ evaluation for Saudi & GCC businesses. Compare suppliers fairly, score automatically, and generate boardroom-ready decision memos — in any industry.",
+          "AI-powered RFQ evaluation for Saudi & GCC businesses. Compare suppliers fairly, score automatically, and generate boardroom-ready decision memos.",
         ctaPrimary: "Start Free Evaluation",
         ctaSecondary: "See How It Works",
       },
@@ -90,15 +90,15 @@ const translations = {
         cards: {
           formats: {
             icon: "🗂️",
-            text: "Quotes arrive in different formats — Excel, PDF, WhatsApp, email — impossible to compare",
+            text: "Quotes in different formats — Excel, PDF, WhatsApp, email",
           },
           currency: {
             icon: "💱",
-            text: "Prices in SAR, USD, CNY — no fair way to compare without manual conversion",
+            text: "Prices in SAR, USD, CNY — no fair way to compare",
           },
           time: {
             icon: "⏰",
-            text: "Evaluation takes days. The board needs a decision by Sunday.",
+            text: "Manual evaluation takes days. Board needs answer by Sunday.",
           },
         },
       },
@@ -112,8 +112,8 @@ const translations = {
           },
           normalize: {
             icon: "🔢",
-            title: "Auto-Normalize",
-            description: "All prices converted to your base currency",
+            title: "Auto-Normalize to SAR",
+            description: "All prices converted to a landed cost in SAR",
           },
           score: {
             icon: "🤖",
@@ -122,7 +122,7 @@ const translations = {
           },
           memo: {
             icon: "📄",
-            title: "Generate Memo",
+            title: "Generate Decision Memo",
             description: "Professional decision document in English & Arabic",
           },
         },
@@ -143,22 +143,22 @@ const translations = {
           },
           compliance: {
             icon: "🏅",
-            title: "Compliance Tracking",
+            title: "SASO/ISO Compliance Tracking",
             description: "SASO, ISO, and custom certifications tracked in every evaluation",
           },
           memo: {
             icon: "📄",
-            title: "AI Decision Memo",
+            title: "AI Decision Memo (English & Arabic)",
             description: "Boardroom-ready memo generated in English and Arabic with one click",
           },
           arabic: {
             icon: "🌐",
-            title: "Full Arabic Support",
+            title: "Full Arabic RTL Support",
             description: "Complete RTL interface — your whole team can use it",
           },
           history: {
             icon: "📊",
-            title: "Evaluation History",
+            title: "Evaluation History Dashboard",
             description: "Track all your RFQs and supplier decisions in one dashboard",
           },
         },
@@ -172,12 +172,7 @@ const translations = {
           free: {
             name: "Free",
             price: "SAR 0",
-            features: [
-              "1 evaluation per month",
-              "Up to 5 suppliers per evaluation",
-              "PDF export",
-              "English & Arabic",
-            ],
+            features: ["1 evaluation per month", "Up to 5 suppliers", "PDF export"],
             cta: "Start Free",
           },
           pro: {
@@ -186,7 +181,8 @@ const translations = {
             features: [
               "Unlimited evaluations",
               "Up to 10 suppliers",
-              "AI scoring + memo generation",
+              "AI scoring + memo",
+              "Arabic & English",
               "Priority support",
             ],
             cta: "Start Pro Trial",
@@ -197,7 +193,7 @@ const translations = {
             features: [
               "Everything in Pro",
               "Up to 5 team members",
-              "Shared evaluation history",
+              "Shared history",
               "Custom scoring criteria",
             ],
             cta: "Contact Us",
@@ -205,8 +201,8 @@ const translations = {
         },
       },
       testimonials: {
-        heading: "Trusted by Procurement & Operations Teams Across the Kingdom",
-        placeholderNote: "Placeholder testimonial",
+        heading: "Trusted Across the Kingdom",
+        placeholderNote: "[PLACEHOLDER]",
         items: {
           fmcg: {
             quote: "We cut our RFQ evaluation time from 3 days to 4 hours.",
@@ -523,15 +519,15 @@ const translations = {
         cards: {
           formats: {
             icon: "🗂️",
-            text: "تصل عروض الأسعار بصيغ مختلفة — إكسل، PDF، واتساب، بريد إلكتروني — يستحيل مقارنتها",
+            text: "عروض الأسعار بصيغ مختلفة — إكسل، PDF، واتساب، بريد إلكتروني",
           },
           currency: {
             icon: "💱",
-            text: "أسعار بالريال والدولار واليوان — لا طريقة عادلة للمقارنة دون تحويل يدوي",
+            text: "أسعار بالريال والدولار واليوان — لا طريقة عادلة للمقارنة",
           },
           time: {
             icon: "⏰",
-            text: "التقييم يستغرق أيامًا. المجلس يحتاج قرارًا بحلول الأحد.",
+            text: "التقييم اليدوي يستغرق أيامًا. المجلس يحتاج إجابة بحلول الأحد.",
           },
         },
       },
@@ -545,8 +541,8 @@ const translations = {
           },
           normalize: {
             icon: "🔢",
-            title: "توحيد تلقائي",
-            description: "تحويل جميع الأسعار إلى عملتك الأساسية",
+            title: "توحيد تلقائي إلى الريال",
+            description: "تحويل جميع الأسعار إلى التكلفة الموصّلة بالريال",
           },
           score: {
             icon: "🤖",
@@ -555,7 +551,7 @@ const translations = {
           },
           memo: {
             icon: "📄",
-            title: "إنشاء المذكرة",
+            title: "إنشاء مذكرة القرار",
             description: "مستند قرار احترافي بالعربية والإنجليزية",
           },
         },
@@ -576,22 +572,22 @@ const translations = {
           },
           compliance: {
             icon: "🏅",
-            title: "متابعة الامتثال",
+            title: "متابعة الامتثال لسيسو/الآيزو",
             description: "تتبّع شهادات سيسو والآيزو والشهادات المخصصة في كل تقييم",
           },
           memo: {
             icon: "📄",
-            title: "مذكرة قرار بالذكاء الاصطناعي",
+            title: "مذكرة قرار بالذكاء الاصطناعي (عربي وإنجليزي)",
             description: "مذكرة جاهزة لمجلس الإدارة بالعربية والإنجليزية بضغطة واحدة",
           },
           arabic: {
             icon: "🌐",
-            title: "دعم كامل للغة العربية",
+            title: "دعم كامل للغة العربية (RTL)",
             description: "واجهة كاملة من اليمين لليسار — يستخدمها فريقك بأكمله",
           },
           history: {
             icon: "📊",
-            title: "سجل التقييمات",
+            title: "لوحة تحكم سجل التقييمات",
             description: "تابع جميع طلبات التسعير وقرارات الموردين في لوحة تحكم واحدة",
           },
         },
@@ -605,12 +601,7 @@ const translations = {
           free: {
             name: "مجاني",
             price: "0 ريال",
-            features: [
-              "تقييم واحد شهريًا",
-              "حتى 5 موردين لكل تقييم",
-              "تصدير PDF",
-              "عربي وإنجليزي",
-            ],
+            features: ["تقييم واحد شهريًا", "حتى 5 موردين", "تصدير PDF"],
             cta: "ابدأ مجانًا",
           },
           pro: {
@@ -619,7 +610,8 @@ const translations = {
             features: [
               "تقييمات غير محدودة",
               "حتى 10 موردين",
-              "تقييم بالذكاء الاصطناعي وإنشاء المذكرات",
+              "تقييم بالذكاء الاصطناعي والمذكرات",
+              "عربي وإنجليزي",
               "دعم ذو أولوية",
             ],
             cta: "ابدأ التجربة الاحترافية",
@@ -630,7 +622,7 @@ const translations = {
             features: [
               "كل ما في الباقة الاحترافية",
               "حتى 5 أعضاء فريق",
-              "سجل تقييمات مشترك",
+              "سجل مشترك",
               "معايير تقييم مخصّصة",
             ],
             cta: "تواصل معنا",
@@ -638,8 +630,8 @@ const translations = {
         },
       },
       testimonials: {
-        heading: "موثوق به من فرق المشتريات والعمليات في جميع أنحاء المملكة",
-        placeholderNote: "شهادة نموذجية",
+        heading: "موثوق به في جميع أنحاء المملكة",
+        placeholderNote: "[نموذج]",
         items: {
           fmcg: {
             quote: "اختصرنا وقت تقييم طلبات التسعير من 3 أيام إلى 4 ساعات.",
