@@ -86,7 +86,7 @@ const translations = {
       },
       problem: {
         heading: "Sound familiar?",
-        solvedSuffix: "RFQ Evaluator solves this in under 4 hours.",
+        solvedSuffix: "RFQ Evaluator solves this in less than an hour.",
         cards: {
           formats: {
             icon: "🗂️",
@@ -494,7 +494,7 @@ const translations = {
       },
       problem: {
         heading: "يبدو هذا مألوفًا؟",
-        solvedSuffix: "يحل مقيّم طلبات التسعير هذا خلال أقل من 4 ساعات.",
+        solvedSuffix: "يحل مقيّم طلبات التسعير هذا خلال أقل من ساعة.",
         cards: {
           formats: {
             icon: "🗂️",
