@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
+import Portfolio from "./pages/Portfolio";
 import NewEvaluation from "./pages/NewEvaluation";
 import Results from "./pages/Results";
 
@@ -18,6 +19,7 @@ function AppShell() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/new-evaluation" element={<NewEvaluation />} />
           <Route path="/results" element={<Results />} />
           <Route path="/results/:id" element={<Results />} />

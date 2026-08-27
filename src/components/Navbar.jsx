@@ -18,6 +18,9 @@ export default function Navbar() {
           <Link to="/dashboard" className="hover:text-gold transition-colors">
             {t("nav.dashboard")}
           </Link>
+          <Link to="/portfolio" className="hover:text-gold transition-colors">
+            {t("nav.portfolio")}
+          </Link>
           <Link
             to="/new-evaluation"
             className="hover:text-gold transition-colors"
