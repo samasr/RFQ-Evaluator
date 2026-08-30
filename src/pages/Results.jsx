@@ -18,6 +18,7 @@ import { CRITERIA_KEYS } from "../utils/aiScoring";
 import NormalizationTable from "../components/NormalizationTable";
 import ScoringWeights from "../components/ScoringWeights";
 import AIScoringPanel from "../components/AIScoringPanel";
+import ClarificationPanel from "../components/ClarificationPanel";
 import DecisionMemoPanel from "../components/DecisionMemoPanel";
 
 function scoreBadgeClass(score) {
@@ -385,6 +386,12 @@ export default function Results() {
         normalizedRows={normalizedRows}
         weights={weights}
         onResult={setAiResult}
+      />
+
+      <ClarificationPanel
+        rfqHeader={rfqHeader}
+        normalizedRows={normalizedRows}
+        aiResult={aiResult}
       />
 
       <DecisionMemoPanel

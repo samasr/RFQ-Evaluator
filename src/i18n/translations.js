@@ -562,6 +562,27 @@ const translations = {
           completeness: "Completeness",
         },
       },
+      clarify: {
+        heading: "Clarification Questions",
+        description:
+          "Generate the follow-up questions to send each supplier before awarding — missing fields, ambiguous terms, and red flags to resolve.",
+        generateButton: "Generate Questions",
+        regenerateButton: "Regenerate",
+        notConfigured:
+          "AI isn't configured yet — set VITE_AI_PROXY_URL to your deployed proxy URL.",
+        loading: "Claude is reviewing the quotes…",
+        error: "Couldn't generate questions: {error}",
+        questionCount: "{count} questions",
+        noQuestions: "Quote looks complete — no clarification needed.",
+        rationaleLabel: "Why",
+        copyQuestions: "Copy",
+        copyAll: "Copy all",
+        copied: "Copied ✓",
+        emailSupplier: "Email",
+        emailSubject: "Clarifications on your quote — {title}",
+        emailIntro:
+          "Hello {supplier}, thank you for your quotation. Before we proceed, could you please clarify the following:",
+      },
       memo: {
         heading: "Decision Memo",
         generateButton: "Generate Decision Memo",
@@ -1163,6 +1184,27 @@ const translations = {
           moq: "الحد الأدنى للطلب",
           completeness: "اكتمال البيانات",
         },
+      },
+      clarify: {
+        heading: "أسئلة الاستيضاح",
+        description:
+          "أنشئ أسئلة المتابعة لإرسالها إلى كل مورد قبل الترسية — الحقول الناقصة والشروط الغامضة والملاحظات التي تحتاج إلى حلّ.",
+        generateButton: "إنشاء الأسئلة",
+        regenerateButton: "إعادة الإنشاء",
+        notConfigured:
+          "لم يتم إعداد الذكاء الاصطناعي بعد — عيّن VITE_AI_PROXY_URL على رابط الخادم الوسيط المنشور.",
+        loading: "يراجع Claude عروض الأسعار…",
+        error: "تعذّر إنشاء الأسئلة: {error}",
+        questionCount: "{count} أسئلة",
+        noQuestions: "يبدو أن العرض مكتمل — لا حاجة إلى استيضاح.",
+        rationaleLabel: "السبب",
+        copyQuestions: "نسخ",
+        copyAll: "نسخ الكل",
+        copied: "تم النسخ ✓",
+        emailSupplier: "إرسال بريد",
+        emailSubject: "استيضاحات بشأن عرض سعركم — {title}",
+        emailIntro:
+          "مرحبًا {supplier}، شكرًا لعرض سعركم. قبل المتابعة، يُرجى توضيح ما يلي:",
       },
       memo: {
         heading: "مذكرة القرار",
