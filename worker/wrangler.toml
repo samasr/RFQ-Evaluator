@@ -9,4 +9,4 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 # Comma-separated list of origins allowed to call this proxy.
-ALLOWED_ORIGINS = "https://samasr.github.io,http://localhost:5173,http://localhost:5174"
+ALLOWED_ORIGINS = "https://rfqranker.com,https://www.rfqranker.com,https://samasr.github.io,http://localhost:5173,http://localhost:5174"
