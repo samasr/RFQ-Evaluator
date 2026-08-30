@@ -92,6 +92,27 @@ export default function CaseStudyCard({ caseStudy }) {
           }`}
         >
           <div className="overflow-hidden">
+            {caseStudy.workflow?.length > 0 && (
+              <div className="mb-6">
+                <p className="text-xs font-semibold text-navy uppercase tracking-wide mb-2">
+                  {t("portfolio.workflowLabel")}
+                </p>
+                <ol className="space-y-2">
+                  {caseStudy.workflow.map((step, i) => (
+                    <li
+                      key={i}
+                      className="flex gap-2 text-sm text-gray-700"
+                    >
+                      <span className="font-bold text-gold shrink-0">
+                        {i + 1}.
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
             <div className="overflow-x-auto border border-gray-200 rounded-lg mb-6">
               <table className="w-full text-left rtl:text-right border-collapse text-sm">
                 <thead>

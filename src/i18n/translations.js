@@ -229,6 +229,7 @@ const translations = {
       winnerBadge: "Winner",
       winnerLabel: "Recommended Supplier",
       keyInsightLabel: "Key Insight",
+      workflowLabel: "How this evaluation was run",
       industries: {
         manufacturing: "Manufacturing",
         fmcg: "FMCG",
@@ -250,6 +251,12 @@ const translations = {
             "5 suppliers across 3 countries quoting in SAR, USD, and CNY. Manual comparison took 3 days with no clear winner.",
           suppliersEvaluated: 5,
           currencies: ["SAR", "USD", "CNY"],
+          workflow: [
+            "Supplier quotes uploaded as PDFs — AI extraction auto-filled price, lead time, Incoterms, and certifications for all 5.",
+            "Scoring weights tuned for this RFQ: SASO compliance and landed cost raised, MOQ lowered.",
+            "Every quote normalized to a SAR landed cost — freight, customs, and VAT applied per Incoterm.",
+            "AI clarification questions sent to the Chinese supplier to confirm the missing SASO documentation before ranking.",
+          ],
           keyInsight:
             "Chinese supplier appeared cheapest at face value but ranked 3rd after freight, customs, and SASO compliance were factored in.",
           result: "18% cost saving vs previous year purchase price",
@@ -297,6 +304,12 @@ const translations = {
             "Urgent RFQ for packaging materials — 7 suppliers, board needed decision in 24 hours.",
           suppliersEvaluated: 7,
           currencies: ["SAR", "USD"],
+          workflow: [
+            "All 7 quotes bulk-uploaded in one drop; AI extraction filled the comparison table in minutes.",
+            "Scoring weights shifted toward lead time and delivery terms for the 24-hour deadline.",
+            "Landed-cost normalization exposed the 45-day lead time hidden behind the lowest headline price.",
+            "AI clarification questions flagged the SASO gap on the second-lowest bid before the board meeting.",
+          ],
           keyInsight:
             "Lowest price supplier had 45-day lead time — disqualified. Second lowest had SASO issues. Winner balanced cost, speed, and compliance.",
           result: "Decision made in 2 hours instead of 2 days",
@@ -344,6 +357,12 @@ const translations = {
             "Evaluating forklift suppliers for new warehouse — mix of local and international suppliers with different payment terms and certifications.",
           suppliersEvaluated: 4,
           currencies: ["SAR", "EUR", "USD"],
+          workflow: [
+            "EUR and USD quotes uploaded as PDFs — AI extraction pulled unit prices, Incoterms, and warranty terms.",
+            "Scoring weights balanced across cost, compliance, and payment terms for a capital purchase.",
+            "Landed-cost normalization converted every quote to SAR DDP Dammam, adding freight and 5% customs.",
+            "AI clarification questions confirmed what the European quote excluded — freight, customs clearance, and installation.",
+          ],
           keyInsight:
             "European supplier offered superior specs but EUR price + freight + customs made total landed cost 34% higher than local authorized dealer.",
           result: "SAR 280,000 saved vs European option",
@@ -852,6 +871,7 @@ const translations = {
       winnerBadge: "الفائز",
       winnerLabel: "المورد الموصى به",
       keyInsightLabel: "أبرز ملاحظة",
+      workflowLabel: "كيف أُجري هذا التقييم",
       industries: {
         manufacturing: "التصنيع",
         fmcg: "السلع الاستهلاكية السريعة",
@@ -873,6 +893,12 @@ const translations = {
             "5 موردين من 3 دول يقدمون عروضهم بالريال والدولار واليوان. استغرقت المقارنة اليدوية 3 أيام دون فائز واضح.",
           suppliersEvaluated: 5,
           currencies: ["SAR", "USD", "CNY"],
+          workflow: [
+            "رُفعت عروض الموردين كملفات PDF — وملأ الاستخراج بالذكاء الاصطناعي السعر ومدة التسليم وشروط التسليم والشهادات للموردين الخمسة تلقائيًا.",
+            "ضُبطت أوزان التقييم لهذا الطلب: رُفع وزن الامتثال لسيسو والتكلفة الموصّلة، وخُفّض وزن الحد الأدنى للطلب.",
+            "حُوّل كل عرض إلى تكلفة موصّلة بالريال — مع تطبيق الشحن والجمارك وضريبة القيمة المضافة حسب شرط التسليم.",
+            "أُرسلت أسئلة استيضاح بالذكاء الاصطناعي إلى المورد الصيني لتأكيد وثائق سيسو الناقصة قبل الترتيب.",
+          ],
           keyInsight:
             "بدا المورد الصيني الأرخص ظاهريًا، لكنه جاء في المرتبة الثالثة بعد احتساب الشحن والجمارك والامتثال لسيسو.",
           result: "توفير 18% في التكلفة مقارنة بسعر الشراء للعام السابق",
@@ -920,6 +946,12 @@ const translations = {
             "طلب تسعير عاجل لمواد التغليف — 7 موردين، والمجلس بحاجة لقرار خلال 24 ساعة.",
           suppliersEvaluated: 7,
           currencies: ["SAR", "USD"],
+          workflow: [
+            "رُفعت العروض السبعة دفعة واحدة؛ وملأ الاستخراج بالذكاء الاصطناعي جدول المقارنة خلال دقائق.",
+            "حُوّلت أوزان التقييم نحو مدة التسليم وشروط التسليم بسبب مهلة الـ24 ساعة.",
+            "كشف تطبيع التكلفة الموصّلة عن مدة تسليم 45 يومًا كانت مخفية خلف أدنى سعر معلن.",
+            "أبرزت أسئلة الاستيضاح بالذكاء الاصطناعي ثغرة سيسو في ثاني أقل عرض قبل اجتماع المجلس.",
+          ],
           keyInsight:
             "المورد الأقل سعرًا كانت مدة تسليمه 45 يومًا — تم استبعاده. الثاني الأقل سعرًا كانت لديه مشاكل في الامتثال لسيسو. الفائز حقق توازنًا بين التكلفة والسرعة والامتثال.",
           result: "تم اتخاذ القرار خلال ساعتين بدلاً من يومين",
@@ -967,6 +999,12 @@ const translations = {
             "تقييم موردي الرافعات الشوكية لمستودع جديد — مزيج من الموردين المحليين والدوليين بشروط دفع وشهادات مختلفة.",
           suppliersEvaluated: 4,
           currencies: ["SAR", "EUR", "USD"],
+          workflow: [
+            "رُفعت عروض اليورو والدولار كملفات PDF — واستخرج الذكاء الاصطناعي أسعار الوحدات وشروط التسليم وشروط الضمان.",
+            "وُوزنت أوزان التقييم بين التكلفة والامتثال وشروط الدفع لكونها عملية شراء رأسمالية.",
+            "حوّل تطبيع التكلفة الموصّلة كل عرض إلى الريال تسليم DDP الدمام، مع إضافة الشحن وجمارك 5%.",
+            "أكدت أسئلة الاستيضاح بالذكاء الاصطناعي ما استثناه العرض الأوروبي — الشحن والتخليص الجمركي والتركيب.",
+          ],
           keyInsight:
             "قدّم المورد الأوروبي مواصفات أعلى، لكن سعر اليورو والشحن والجمارك رفعوا التكلفة الموصّلة الإجمالية بنسبة 34% مقارنة بالموزع المحلي المعتمد.",
           result: "توفير 280,000 ريال مقارنة بالخيار الأوروبي",
