@@ -6,6 +6,7 @@ export default {
       colors: {
         navy: "#1E3A5F",
         gold: "#C5A028",
+        cream: "#FFF8E7", // highlight for AI-auto-filled fields
       },
     },
   },

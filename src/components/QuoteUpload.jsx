@@ -37,40 +37,43 @@ export default function QuoteUpload({ rfqHeader, maxFiles, onSuppliersExtracted 
   const runExtraction = async () => {
     setProcessing(true);
     setSummary(null);
-    let succeeded = 0;
-    let failed = 0;
-    const extracted = [];
+    setProgress({ done: 0, total: files.length });
+    setFiles((prev) => prev.map((f) => ({ ...f, status: "extracting", error: null })));
 
-    for (let i = 0; i < files.length; i++) {
-      const entry = files[i];
-      setProgress({ done: i, total: files.length });
-      setFiles((prev) =>
-        prev.map((f) => (f.id === entry.id ? { ...f, status: "extracting" } : f))
-      );
-      try {
-        const supplier = await extractSupplierFromFile({
-          file: entry.file,
-          rfqHeader,
-          proxyUrl: PROXY_URL,
-        });
-        extracted.push(supplier);
-        succeeded += 1;
-        setFiles((prev) =>
-          prev.map((f) => (f.id === entry.id ? { ...f, status: "done" } : f))
-        );
-      } catch (err) {
-        failed += 1;
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === entry.id ? { ...f, status: "error", error: err.message } : f
-          )
-        );
-      }
-    }
+    // All files extract in parallel; each updates its own row + the shared
+    // progress counter as it settles.
+    let done = 0;
+    const settled = await Promise.all(
+      files.map(async (entry) => {
+        try {
+          const result = await extractSupplierFromFile({
+            file: entry.file,
+            rfqHeader,
+            proxyUrl: PROXY_URL,
+          });
+          done += 1;
+          setProgress({ done, total: files.length });
+          setFiles((prev) =>
+            prev.map((f) => (f.id === entry.id ? { ...f, status: "done" } : f))
+          );
+          return result;
+        } catch (err) {
+          done += 1;
+          setProgress({ done, total: files.length });
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === entry.id ? { ...f, status: "error", error: err.message } : f
+            )
+          );
+          return null;
+        }
+      })
+    );
 
+    const extracted = settled.filter(Boolean);
     setProgress(null);
     setProcessing(false);
-    setSummary({ succeeded, failed });
+    setSummary({ succeeded: extracted.length, failed: settled.length - extracted.length });
     if (extracted.length > 0) {
       onSuppliersExtracted(extracted);
     }
@@ -192,7 +195,7 @@ export default function QuoteUpload({ rfqHeader, maxFiles, onSuppliersExtracted 
         {progress && (
           <span className="text-xs text-gray-500">
             {t("newEvaluation.upload.progress", {
-              done: progress.done + 1,
+              done: progress.done,
               total: progress.total,
             })}
           </span>

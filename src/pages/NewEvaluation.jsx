@@ -50,6 +50,10 @@ export default function NewEvaluation() {
       : [emptySupplier()];
   });
 
+  // Per-row record of which fields Claude auto-filled from an uploaded quote,
+  // keyed by supplier id — drives the light-gold highlight on those cells.
+  const [autoFilledByRow, setAutoFilledByRow] = useState({});
+
   // Clear the handoff state once consumed so navigating back here later
   // (browser back/forward, or a plain link) doesn't re-seed the table.
   useEffect(() => {
@@ -83,6 +87,12 @@ export default function NewEvaluation() {
     setSuppliers((prev) =>
       prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
     );
+    // A manual edit means the user has reviewed that cell — drop its highlight.
+    setAutoFilledByRow((prev) => {
+      const current = prev[id];
+      if (!current || !current.includes(field)) return prev;
+      return { ...prev, [id]: current.filter((f) => f !== field) };
+    });
   };
 
   const addSupplier = () => {
@@ -93,16 +103,40 @@ export default function NewEvaluation() {
 
   const removeSupplier = (id) => {
     setSuppliers((prev) => prev.filter((s) => s.id !== id));
+    setAutoFilledByRow((prev) => {
+      if (!(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
   };
 
-  // Extracted suppliers replace any still-blank rows first, then append,
-  // capped at MAX_SUPPLIERS so an upload batch can't overflow the table.
-  const handleSuppliersExtracted = (extractedSuppliers) => {
+  // Single-row upload: replace that row's fields with the extraction (keeping
+  // its id and table position) and record which cells were auto-filled.
+  const handleApplyExtraction = (id, extracted, filledFields) => {
+    setSuppliers((prev) =>
+      prev.map((s) => (s.id === id ? { ...extracted, id } : s))
+    );
+    setAutoFilledByRow((prev) => ({ ...prev, [id]: filledFields }));
+  };
+
+  // Bulk upload: each result is { supplier, filledFields }. Extracted rows
+  // replace any still-blank rows first, then append, capped at MAX_SUPPLIERS
+  // so an upload batch can't overflow the table.
+  const handleSuppliersExtracted = (results) => {
     setSuppliers((prev) => {
       const nonEmpty = prev.filter(
         (s) => s.name.trim() !== "" || s.unitPrice !== ""
       );
-      return [...nonEmpty, ...extractedSuppliers].slice(0, MAX_SUPPLIERS);
+      return [...nonEmpty, ...results.map((r) => r.supplier)].slice(
+        0,
+        MAX_SUPPLIERS
+      );
+    });
+    setAutoFilledByRow((prev) => {
+      const next = { ...prev };
+      for (const r of results) next[r.supplier.id] = r.filledFields;
+      return next;
     });
   };
 
@@ -266,6 +300,9 @@ export default function NewEvaluation() {
                   index={index}
                   onChange={updateSupplierField}
                   onRemove={removeSupplier}
+                  onApplyExtraction={handleApplyExtraction}
+                  autoFilled={autoFilledByRow[supplier.id]}
+                  rfqHeader={rfqHeader}
                   baseCurrency={rfqHeader.baseCurrency}
                   fxRates={fx.status === "success" ? fx.rates : null}
                 />

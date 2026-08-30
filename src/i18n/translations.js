@@ -442,6 +442,11 @@ const translations = {
       portCityPlaceholder: "e.g. Jeddah, Shenzhen",
       notesPlaceholder: "Notes",
       remove: "Remove",
+      uploadQuote: "📎 Upload Quote",
+      readingQuote: "Claude is reading your quote…",
+      quoteExtracted: "Quote extracted successfully",
+      quoteFailed: "Extraction failed",
+      quoteUnsupported: "Only PDF and image files are supported.",
       upload: {
         heading: "Upload Quotations (AI Extraction)",
         description:
@@ -454,7 +459,7 @@ const translations = {
         remove: "Remove file",
         extractButton: "Extract Suppliers with AI",
         extracting: "Extracting…",
-        progress: "Extracting file {done} of {total}…",
+        progress: "Extracted {done} of {total}…",
         summary: "{succeeded} of {total} suppliers extracted successfully.",
       },
     },
@@ -1027,6 +1032,11 @@ const translations = {
       portCityPlaceholder: "مثال: جدة، شنتشن",
       notesPlaceholder: "ملاحظات",
       remove: "إزالة",
+      uploadQuote: "📎 رفع عرض السعر",
+      readingQuote: "يقوم Claude بقراءة عرض السعر…",
+      quoteExtracted: "تم استخراج عرض السعر بنجاح",
+      quoteFailed: "فشل الاستخراج",
+      quoteUnsupported: "يُدعم رفع ملفات PDF والصور فقط.",
       upload: {
         heading: "رفع عروض الأسعار (استخراج بالذكاء الاصطناعي)",
         description:
@@ -1039,7 +1049,7 @@ const translations = {
         remove: "إزالة الملف",
         extractButton: "استخراج الموردين بالذكاء الاصطناعي",
         extracting: "جارٍ الاستخراج…",
-        progress: "جارٍ استخراج الملف {done} من {total}…",
+        progress: "تم استخراج {done} من {total}…",
         summary: "تم استخراج {succeeded} من {total} موردين بنجاح.",
       },
     },

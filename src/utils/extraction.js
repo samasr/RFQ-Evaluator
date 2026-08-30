@@ -23,8 +23,14 @@ function toFieldString(value) {
   return String(value);
 }
 
+function toFiniteNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function buildExtractionPrompt(rfqHeader) {
-  return `You are a procurement data-extraction assistant. Below is a supplier's price quotation (document or pasted text). Extract the following fields and return ONLY valid JSON, no explanation, no markdown fences.
+  return `You are a procurement data-extraction assistant. Below is a supplier's price quotation (document or image). Extract the following fields and return ONLY valid JSON, no explanation, no markdown fences.
 
 Format:
 {
@@ -38,14 +44,18 @@ Format:
   "sasoStatus": one of ["SASO + ISO","SASO only","ISO only","None","Not stated"],
   "deliveryTerms": one of ["DDP","DAP","CIF","FOB","EXW","CFR"],
   "portCity": string,
+  "freightCost": number or null,
   "notes": string
 }
 
 Rules:
-- If a field is not stated in the document, use "Not stated" for sasoStatus, "" for portCity, null for numeric fields, and the closest option from the allowed lists for other enum fields — never invent a value outside the given lists.
-- Do not guess numeric prices, lead times, or MOQ if they are not present — use null and mention it in "notes".
+- If a field is not stated in the document, use null for the numeric fields (unitPrice, leadTime, moq, freightCost), "Not stated" for sasoStatus, "" for portCity, and the closest option from the allowed lists for the other enum fields — never invent a value outside the given lists.
+- Detect "currency" from the document (symbols, ISO codes, or the supplier's country).
+- Do not guess numeric prices, lead times, MOQ, or freight if they are not present — use null and mention it in "notes".
 - "leadTime" is in days — convert ranges (e.g. "45-60 days") to their midpoint and note the original range in "notes".
-- Use "notes" for any red flags, unusual terms, or fields you had to estimate or could not map to the allowed lists.
+- "freightCost" is any separately-stated shipping / freight charge, in the quote's currency; use null if freight is bundled into the unit price or not mentioned.
+- For "sasoStatus", look for any mention of SASO, ISO, CE, or other quality certificates.
+- Use "notes" for special conditions, red flags, unusual terms, or fields you had to estimate or could not map to the allowed lists.
 
 RFQ context: product "${rfqHeader?.product || "unspecified"}".`;
 }
@@ -56,42 +66,85 @@ function extractJson(text) {
   return JSON.parse(fenced ? fenced[1] : trimmed);
 }
 
-// Maps Claude's raw extraction onto our fixed option lists, falling back to
-// a sensible default (and a note) when the model's answer doesn't exactly
-// match — real documents are messy, so this never throws on a near-miss.
+// Maps Claude's raw extraction onto our fixed option lists, falling back to a
+// sensible default (and a note) when the model's answer doesn't exactly match
+// — real documents are messy, so this never throws on a near-miss.
+//
+// Returns the row-shaped `supplier` plus `filledFields`: the row columns the
+// document actually supplied a value for, so the UI can highlight the cells
+// that were auto-filled and leave the rest for the user to complete.
 export function normalizeExtractedSupplier(raw) {
   const notes = [];
-  if (raw.notes) notes.push(raw.notes);
+  if (raw.notes) notes.push(String(raw.notes));
+  const filled = new Set();
+
+  if (raw.name && String(raw.name).trim()) filled.add("name");
 
   const country = matchEnum(raw.country, COUNTRIES);
-  if (!country && raw.country) notes.push(`Country as quoted: "${raw.country}".`);
+  if (raw.country) {
+    filled.add("country");
+    if (!country) notes.push(`Country as quoted: "${raw.country}".`);
+  }
 
   const currency = matchEnum(raw.currency, CURRENCIES);
-  if (!currency && raw.currency) notes.push(`Currency as quoted: "${raw.currency}".`);
+  if (raw.currency) {
+    filled.add("currency");
+    if (!currency) notes.push(`Currency as quoted: "${raw.currency}".`);
+  }
 
   const paymentTerms = matchEnum(raw.paymentTerms, PAYMENT_TERMS);
-  if (!paymentTerms && raw.paymentTerms)
-    notes.push(`Payment terms as quoted: "${raw.paymentTerms}".`);
+  if (raw.paymentTerms) {
+    filled.add("paymentTerms");
+    if (!paymentTerms) notes.push(`Payment terms as quoted: "${raw.paymentTerms}".`);
+  }
 
   const sasoStatus = matchEnum(raw.sasoStatus, SASO_STATUSES);
+  if (raw.sasoStatus && sasoStatus && sasoStatus !== "Not stated") {
+    filled.add("sasoStatus");
+  }
 
   const deliveryTerms = matchEnum(raw.deliveryTerms, DELIVERY_TERMS);
-  if (!deliveryTerms && raw.deliveryTerms)
-    notes.push(`Delivery terms as quoted: "${raw.deliveryTerms}".`);
+  if (raw.deliveryTerms) {
+    filled.add("deliveryTerms");
+    if (!deliveryTerms) notes.push(`Delivery terms as quoted: "${raw.deliveryTerms}".`);
+  }
+
+  const unitPrice = toFiniteNumber(raw.unitPrice);
+  if (unitPrice !== null) filled.add("unitPrice");
+
+  const leadTime = toFiniteNumber(raw.leadTime);
+  if (leadTime !== null) filled.add("leadTime");
+
+  const moq = toFiniteNumber(raw.moq);
+  if (moq !== null) filled.add("moq");
+
+  const freightCost = toFiniteNumber(raw.freightCost);
+  if (freightCost !== null) {
+    const unit = currency || raw.currency || "";
+    notes.push(`Freight cost stated in quote: ${freightCost} ${unit}`.trim() + ".");
+  }
+
+  if (raw.portCity && String(raw.portCity).trim()) filled.add("portCity");
+
+  const noteText = notes.join(" ").trim();
+  if (noteText) filled.add("notes");
 
   return {
-    id: crypto.randomUUID(),
-    name: raw.name || "",
-    country: country || "Other",
-    currency: currency || "SAR",
-    unitPrice: toFieldString(raw.unitPrice),
-    leadTime: toFieldString(raw.leadTime),
-    paymentTerms: paymentTerms || "100% upfront",
-    moq: toFieldString(raw.moq),
-    sasoStatus: sasoStatus || "Not stated",
-    deliveryTerms: deliveryTerms || "DDP",
-    portCity: raw.portCity || "",
-    notes: notes.join(" "),
+    supplier: {
+      id: crypto.randomUUID(),
+      name: raw.name || "",
+      country: country || "Other",
+      currency: currency || "SAR",
+      unitPrice: toFieldString(unitPrice),
+      leadTime: toFieldString(leadTime),
+      paymentTerms: paymentTerms || "100% upfront",
+      moq: toFieldString(moq),
+      sasoStatus: sasoStatus || "Not stated",
+      deliveryTerms: deliveryTerms || "DDP",
+      portCity: raw.portCity || "",
+      notes: noteText,
+    },
+    filledFields: [...filled],
   };
 }
 
@@ -111,6 +164,8 @@ export function isSupportedQuoteFile(file) {
   return file.type === "application/pdf" || file.type.startsWith("image/");
 }
 
+// Resolves to { supplier, filledFields }. Throws with a user-facing message
+// on any failure so callers can show it and fall back to manual entry.
 export async function extractSupplierFromFile({ file, rfqHeader, proxyUrl }) {
   if (!proxyUrl) {
     throw new Error("AI extraction isn't configured yet (no proxy URL set).");
