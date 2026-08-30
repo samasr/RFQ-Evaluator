@@ -500,6 +500,18 @@ const translations = {
         paymentTerms: "Payment Terms",
         moq: "MOQ Fit",
       },
+      weights: {
+        heading: "Scoring Weights",
+        description:
+          "Set how much each criterion counts toward the score. These weights drive both the table ranking below and the AI scoring rubric.",
+        panelTitle: "Criterion Weights",
+        total: "Total: {total}%",
+        show: "Show Weights",
+        hide: "Hide Weights",
+        rebalanceHint:
+          "Weights don't need to total 100% — they're scaled automatically — but a 100% total keeps them easy to read.",
+        resetDefaults: "Reset to Defaults",
+      },
       normalization: {
         heading: "Landed Cost Normalization",
         description:
@@ -1089,6 +1101,18 @@ const translations = {
         compliance: "الامتثال لسيسو/الآيزو",
         paymentTerms: "شروط الدفع",
         moq: "ملاءمة الحد الأدنى للطلب",
+      },
+      weights: {
+        heading: "أوزان التقييم",
+        description:
+          "حدّد مدى تأثير كل معيار في النتيجة. تتحكم هذه الأوزان في ترتيب الجدول أدناه وفي معايير التقييم بالذكاء الاصطناعي معًا.",
+        panelTitle: "أوزان المعايير",
+        total: "المجموع: {total}%",
+        show: "عرض الأوزان",
+        hide: "إخفاء الأوزان",
+        rebalanceHint:
+          "لا يلزم أن يكون مجموع الأوزان 100% — إذ تُوزَّن تلقائيًا — لكن المجموع 100% يجعلها أسهل للقراءة.",
+        resetDefaults: "إعادة التعيين إلى الافتراضي",
       },
       normalization: {
         heading: "تطبيع التكلفة الموصّلة",

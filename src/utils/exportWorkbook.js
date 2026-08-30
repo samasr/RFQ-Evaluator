@@ -1,5 +1,4 @@
 import ExcelJS from "exceljs";
-import { SCORE_CRITERIA } from "./scoring";
 
 // Styling modeled on the reference "Supplier Evaluation Practice Kit" —
 // same navy title band / blue header row / zebra striping / gold total
@@ -155,24 +154,24 @@ function buildNormalizationSheet(workbook, rfqHeader, normalizedRows, assumption
   return sheet;
 }
 
-function buildScoringSheet(workbook, rfqHeader, rankedSuppliers) {
+function buildScoringSheet(workbook, rfqHeader, rankedSuppliers, criteria) {
   const sheet = workbook.addWorksheet("Scoring Matrix");
-  const columns = 2 + SCORE_CRITERIA.length + 1;
+  const columns = 2 + criteria.length + 1;
   sheet.columns = [
     { width: 4 }, { width: 26 },
-    ...SCORE_CRITERIA.map(() => ({ width: 14 })),
+    ...criteria.map(() => ({ width: 14 })),
     { width: 14 },
   ];
 
   titleRow(sheet, `${rfqHeader?.title || "RFQ"} — Weighted Supplier Scoring Matrix`, columns);
-  const criteriaSummary = SCORE_CRITERIA.map(
-    (c) => `${c.label} ${Math.round(c.weight * 100)}%`
-  ).join("  |  ");
+  const criteriaSummary = criteria
+    .map((c) => `${c.label} ${Math.round(c.weight * 100)}%`)
+    .join("  |  ");
   noteRow(sheet, 2, `Criteria weights: ${criteriaSummary}. Scores are 0-100 per criterion; ranked best first.`, columns);
 
   headerRow(sheet, 3, [
     "#", "Supplier",
-    ...SCORE_CRITERIA.map((c) => `${c.label}\n(${Math.round(c.weight * 100)}%)`),
+    ...criteria.map((c) => `${c.label}\n(${Math.round(c.weight * 100)}%)`),
     "WEIGHTED\nTOTAL",
   ]);
   sheet.getCell(3, columns).fill = { type: "pattern", pattern: "solid", fgColor: { argb: GOLD } };
@@ -184,7 +183,7 @@ function buildScoringSheet(workbook, rfqHeader, rankedSuppliers) {
     row.values = [
       i + 1,
       s.name || "—",
-      ...SCORE_CRITERIA.map((c) => Math.round(s.scoreBreakdown[c.key])),
+      ...criteria.map((c) => Math.round(s.scoreBreakdown[c.key])),
       s.score,
     ];
     row.font = { size: 9 };
@@ -202,6 +201,7 @@ export async function exportEvaluationWorkbook({
   rankedSuppliers,
   normalizedRows,
   assumptions,
+  scoreCriteria,
   t,
 }) {
   const workbook = new ExcelJS.Workbook();
@@ -210,7 +210,7 @@ export async function exportEvaluationWorkbook({
 
   buildRawQuotesSheet(workbook, rfqHeader, suppliers, t);
   buildNormalizationSheet(workbook, rfqHeader, normalizedRows, assumptions);
-  buildScoringSheet(workbook, rfqHeader, rankedSuppliers);
+  buildScoringSheet(workbook, rfqHeader, rankedSuppliers, scoreCriteria);
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {

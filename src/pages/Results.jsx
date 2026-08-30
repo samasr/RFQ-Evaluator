@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { rankSuppliers, SCORE_CRITERIA } from "../utils/scoring";
+import {
+  rankSuppliers,
+  SCORING_CRITERIA,
+  DEFAULT_WEIGHTS,
+  normalizeWeights,
+} from "../utils/scoring";
 import { fetchExchangeRates, convertToBase } from "../utils/currency";
 import { useLanguage } from "../context/LanguageContext";
-import { getEvaluation, getLatestEvaluation } from "../utils/storage";
+import {
+  getEvaluation,
+  getLatestEvaluation,
+  updateEvaluation,
+} from "../utils/storage";
 import { DEFAULT_ASSUMPTIONS, normalizeSuppliers } from "../utils/normalization";
 import { CRITERIA_KEYS } from "../utils/aiScoring";
 import NormalizationTable from "../components/NormalizationTable";
+import ScoringWeights from "../components/ScoringWeights";
 import AIScoringPanel from "../components/AIScoringPanel";
 import DecisionMemoPanel from "../components/DecisionMemoPanel";
 
@@ -88,16 +98,37 @@ export default function Results() {
   const needsConversion = suppliers.some((s) => s.currency !== baseCurrency);
 
   const [fx, setFx] = useState({ status: "idle", rates: null, error: null });
-  const [assumptions, setAssumptions] = useState(DEFAULT_ASSUMPTIONS);
+  const [assumptions, setAssumptions] = useState(
+    () => evaluation?.assumptions ?? DEFAULT_ASSUMPTIONS
+  );
+  const [weights, setWeights] = useState(
+    () => evaluation?.weights ?? DEFAULT_WEIGHTS
+  );
+  const normWeights = normalizeWeights(weights);
   const normalizedRows = useMemo(
     () => normalizeSuppliers(suppliers, assumptions),
     [suppliers, assumptions]
   );
   const [aiResult, setAiResult] = useState(null);
 
+  const evaluationId = evaluation?.id;
+  const storedWeights = evaluation?.weights;
+  const storedAssumptions = evaluation?.assumptions;
+
+  // Switching to a different evaluation (id param change) without unmounting:
+  // drop the stale AI result and re-seed weights/assumptions from that record.
   useEffect(() => {
     setAiResult(null);
-  }, [evaluation?.id]);
+    setWeights(storedWeights ?? DEFAULT_WEIGHTS);
+    setAssumptions(storedAssumptions ?? DEFAULT_ASSUMPTIONS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [evaluationId]);
+
+  // Persist tuned weights + assumptions onto the stored evaluation so they
+  // survive a reload and reopening this evaluation later.
+  useEffect(() => {
+    if (evaluationId) updateEvaluation(evaluationId, { weights, assumptions });
+  }, [evaluationId, weights, assumptions]);
 
   useEffect(() => {
     if (!needsConversion) {
@@ -152,6 +183,7 @@ export default function Results() {
 
   const rankedSuppliers = rankSuppliers(suppliersForScoring, {
     annualVolume: rfqHeader?.annualVolume,
+    weights,
   });
 
   // Once AI scoring has run, the table switches to AI-ranked order; suppliers
@@ -197,6 +229,11 @@ export default function Results() {
               rankedSuppliers,
               normalizedRows,
               assumptions,
+              scoreCriteria: SCORING_CRITERIA.map((c) => ({
+                key: c.key,
+                label: t(`results.ai.criteria.${c.key}`),
+                weight: normWeights[c.key],
+              })),
               t,
             });
           }}
@@ -291,9 +328,9 @@ export default function Results() {
                       score={s.score}
                       badgeClass={scoreBadgeClass(s.score)}
                       title={t("results.scoreBreakdown.title")}
-                      rows={SCORE_CRITERIA.map((c) => ({
-                        label: `${t(`results.scoreBreakdown.${c.key}`)} (${Math.round(
-                          c.weight * 100
+                      rows={SCORING_CRITERIA.map((c) => ({
+                        label: `${t(`results.ai.criteria.${c.key}`)} (${Math.round(
+                          normWeights[c.key] * 100
                         )}%)`,
                         value: Math.round(s.scoreBreakdown[c.key]),
                       }))}
@@ -335,6 +372,8 @@ export default function Results() {
         </table>
       </div>
 
+      <ScoringWeights weights={weights} onWeightsChange={setWeights} />
+
       <NormalizationTable
         rows={normalizedRows}
         assumptions={assumptions}
@@ -344,6 +383,7 @@ export default function Results() {
       <AIScoringPanel
         rfqHeader={rfqHeader}
         normalizedRows={normalizedRows}
+        weights={weights}
         onResult={setAiResult}
       />
 

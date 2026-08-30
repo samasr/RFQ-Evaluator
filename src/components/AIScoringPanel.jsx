@@ -33,14 +33,19 @@ function ScoreBar({ label, score }) {
   );
 }
 
-export default function AIScoringPanel({ rfqHeader, normalizedRows, onResult }) {
+export default function AIScoringPanel({ rfqHeader, normalizedRows, weights, onResult }) {
   const { t } = useLanguage();
   const [state, setState] = useState({ status: "idle", data: null, error: null });
 
   const runScoring = async () => {
     setState({ status: "loading", data: null, error: null });
     try {
-      const result = await scoreSuppliersWithAI({ rfqHeader, normalizedRows, proxyUrl: PROXY_URL });
+      const result = await scoreSuppliersWithAI({
+        rfqHeader,
+        normalizedRows,
+        weights,
+        proxyUrl: PROXY_URL,
+      });
       setState({ status: "success", data: result, error: null });
       onResult?.(result);
     } catch (err) {

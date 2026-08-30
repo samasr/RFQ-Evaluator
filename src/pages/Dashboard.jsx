@@ -70,6 +70,7 @@ function EvaluationSummary({ evaluation }) {
     });
     const ranked = rankSuppliers(suppliersForScoring, {
       annualVolume: rfqHeader?.annualVolume,
+      weights: evaluation?.weights,
     });
     topSupplier = ranked[0] ?? null;
   }

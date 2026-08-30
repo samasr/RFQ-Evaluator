@@ -68,6 +68,20 @@ export function saveEvaluation(rfqHeader, suppliers) {
   return entry.id;
 }
 
+// Shallow-merges `patch` into the stored evaluation with the given id (used
+// by Results to persist tuned scoring weights and normalization assumptions
+// so reopening an evaluation restores them). No-op if the id isn't found.
+export function updateEvaluation(id, patch) {
+  const evaluations = migrateLegacyEvaluation();
+  let changed = false;
+  const next = evaluations.map((e) => {
+    if (e.id !== id) return e;
+    changed = true;
+    return { ...e, ...patch };
+  });
+  if (changed) writeAll(next);
+}
+
 export function deleteEvaluation(id) {
   writeAll(migrateLegacyEvaluation().filter((e) => e.id !== id));
 }
