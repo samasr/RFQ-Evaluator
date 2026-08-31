@@ -3,6 +3,9 @@ import Anthropic from "@anthropic-ai/sdk";
 export interface Env {
   ANTHROPIC_API_KEY: string;
   ALLOWED_ORIGINS?: string;
+  // Rate limit bindings (see wrangler.toml). Per-Cloudflare-location, not global.
+  RL_IP: RateLimit;
+  RL_GLOBAL: RateLimit;
 }
 
 const MODEL = "claude-sonnet-4-6";
@@ -64,6 +67,28 @@ export default {
     // browser blocks the response client-side; we also reject them here.
     if (!origin) {
       return jsonResponse({ error: "Origin not allowed" }, 403, origin);
+    }
+
+    // A per-IP cap plus a whole-worker circuit breaker so a scripted client or
+    // a runaway loop can't run up the Anthropic bill. Checked before the body
+    // is read so blocked requests cost almost nothing.
+    const clientIp = request.headers.get("CF-Connecting-IP") || "unknown";
+    const [perIp, global] = await Promise.all([
+      env.RL_IP.limit({ key: clientIp }),
+      env.RL_GLOBAL.limit({ key: "all" }),
+    ]);
+    if (!perIp.success || !global.success) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded — wait a minute and try again." }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders(origin),
+            "Content-Type": "application/json",
+            "Retry-After": "60",
+          },
+        }
+      );
     }
 
     let body: RequestBody;
