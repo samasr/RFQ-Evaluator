@@ -3,13 +3,20 @@ main = "src/index.ts"
 compatibility_date = "2026-08-01"
 compatibility_flags = ["nodejs_compat"]
 
-# ANTHROPIC_API_KEY is a secret — set it with:
-#   npx wrangler secret put ANTHROPIC_API_KEY
-# Never put it here; this file is committed to git.
+# Secrets — set each with `npx wrangler secret put <NAME>`; never commit them:
+#   ANTHROPIC_API_KEY          (AI proxy)
+#   SUPABASE_URL               (billing — e.g. https://<ref>.supabase.co)
+#   SUPABASE_ANON_KEY          (billing — verifies the caller's JWT)
+#   SUPABASE_SERVICE_ROLE_KEY  (billing — applies the plan upgrade, bypasses RLS)
+#   STRIPE_SECRET_KEY          (billing — sk_test_… / sk_live_…)
+#   MOYASAR_SECRET_KEY         (billing — sk_test_… / sk_live_…)
 
 [vars]
 # Comma-separated list of origins allowed to call this proxy.
 ALLOWED_ORIGINS = "https://rfqranker.com,https://www.rfqranker.com,https://samasr.github.io,http://localhost:5173,http://localhost:5174"
+
+# Public site URL — used to build Stripe/Moyasar return URLs. Not secret.
+APP_URL = "https://rfqranker.com"
 
 # Request caps so a scripted client or runaway loop can't run up the Anthropic
 # bill. Limits are enforced per Cloudflare location, not globally. namespace_id

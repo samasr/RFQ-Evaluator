@@ -126,8 +126,20 @@ const translations = {
       title: "Upgrade to {plan}",
       priceLine: "SAR {price} / month",
       comingSoon:
-        "Card payment (mada / Visa / Apple Pay) and international checkout are being set up. This is the Phase 7a placeholder — Phase 7b wires Moyasar and Stripe here.",
+        "Payment isn't configured on this deployment yet. Add the Moyasar and Stripe keys to enable checkout.",
+      payCard: "Pay with card — mada, Visa, Apple Pay",
+      payInternational: "International card (Stripe)",
+      payWithStripe: "Continue to Stripe",
+      redirecting: "Redirecting…",
       backToPricing: "Back to pricing",
+      success: {
+        verifying: "Confirming your payment…",
+        title: "Welcome to {plan}!",
+        body: "Your account is upgraded. Enjoy the new features.",
+        toDashboard: "Go to dashboard",
+        errorTitle: "We couldn't confirm the payment",
+        noReference: "No payment reference found in the link.",
+      },
     },
     footer: {
       rights: "All rights reserved.",
@@ -906,8 +918,20 @@ const translations = {
       title: "الترقية إلى {plan}",
       priceLine: "{price} ريال / شهر",
       comingSoon:
-        "يجري إعداد الدفع بالبطاقة (مدى / Visa / Apple Pay) والدفع الدولي. هذه واجهة المرحلة 7أ المؤقتة — المرحلة 7ب تربط Moyasar وStripe هنا.",
+        "لم يتم إعداد الدفع على هذا الإصدار بعد. أضِف مفاتيح Moyasar وStripe لتفعيل الدفع.",
+      payCard: "الدفع بالبطاقة — مدى، Visa، Apple Pay",
+      payInternational: "بطاقة دولية (Stripe)",
+      payWithStripe: "المتابعة إلى Stripe",
+      redirecting: "جارٍ التحويل…",
       backToPricing: "العودة للأسعار",
+      success: {
+        verifying: "جارٍ تأكيد عملية الدفع…",
+        title: "مرحبًا بك في {plan}!",
+        body: "تمت ترقية حسابك. استمتع بالمزايا الجديدة.",
+        toDashboard: "الذهاب إلى لوحة التحكم",
+        errorTitle: "تعذّر تأكيد عملية الدفع",
+        noReference: "لم يتم العثور على مرجع الدفع في الرابط.",
+      },
     },
     footer: {
       rights: "جميع الحقوق محفوظة.",
