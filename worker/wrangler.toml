@@ -10,7 +10,6 @@ compatibility_flags = ["nodejs_compat"]
 #   SUPABASE_SERVICE_ROLE_KEY  (billing — applies the plan upgrade, bypasses RLS)
 #   STRIPE_SECRET_KEY          (billing — sk_test_… / sk_live_…)
 #   MOYASAR_SECRET_KEY         (billing — sk_test_… / sk_live_…)
-
 [vars]
 # Comma-separated list of origins allowed to call this proxy.
 ALLOWED_ORIGINS = "https://rfqranker.com,https://www.rfqranker.com,https://samasr.github.io,http://localhost:5173,http://localhost:5174"
