@@ -8,11 +8,13 @@ import {
 } from "../utils/scoring";
 import { fetchExchangeRates, convertToBase } from "../utils/currency";
 import { useLanguage } from "../context/LanguageContext";
+import { useAuth } from "../context/AuthContext";
 import {
   getEvaluation,
   getLatestEvaluation,
   updateEvaluation,
-} from "../utils/storage";
+} from "../lib/evaluationStore";
+import { hasFeature } from "../lib/planLimits";
 import { DEFAULT_ASSUMPTIONS, normalizeSuppliers } from "../utils/normalization";
 import { CRITERIA_KEYS } from "../utils/aiScoring";
 import NormalizationTable from "../components/NormalizationTable";
@@ -20,6 +22,8 @@ import ScoringWeights from "../components/ScoringWeights";
 import AIScoringPanel from "../components/AIScoringPanel";
 import ClarificationPanel from "../components/ClarificationPanel";
 import DecisionMemoPanel from "../components/DecisionMemoPanel";
+import FeatureGate from "../components/FeatureGate";
+import UpgradeModal from "../components/UpgradeModal";
 
 function scoreBadgeClass(score) {
   if (score >= 75) return "bg-green-100 text-green-800";
@@ -88,10 +92,66 @@ function Badge({ score, badgeClass, title, rows }) {
   );
 }
 
+function ExportButton({ onExport }) {
+  const { t } = useLanguage();
+  const { plan } = useAuth();
+  const [modalOpen, setModalOpen] = useState(false);
+
+  if (hasFeature(plan, "pdfExport")) {
+    return (
+      <button
+        type="button"
+        onClick={onExport}
+        className="bg-gold text-navy px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
+      >
+        {t("results.exportToExcel")}
+      </button>
+    );
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setModalOpen(true)}
+        className="bg-white text-navy border border-gold px-4 py-2 rounded-md text-sm font-semibold hover:bg-gold/10 transition-colors"
+      >
+        🔒 {t("results.exportToExcel")}
+      </button>
+      <UpgradeModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        feature="pdfExport"
+      />
+    </>
+  );
+}
+
 export default function Results() {
   const { t } = useLanguage();
   const { id } = useParams();
-  const evaluation = id ? getEvaluation(id) : getLatestEvaluation();
+  const { user, loading: authLoading } = useAuth();
+
+  const [evalState, setEvalState] = useState({ status: "loading", data: null });
+
+  useEffect(() => {
+    if (authLoading) return;
+    let cancelled = false;
+    setEvalState({ status: "loading", data: null });
+    const request = id ? getEvaluation(user, id) : getLatestEvaluation(user);
+    request
+      .then((data) => {
+        if (!cancelled) setEvalState({ status: "ready", data });
+      })
+      .catch(() => {
+        if (!cancelled) setEvalState({ status: "error", data: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, user, authLoading]);
+
+  const evaluation = evalState.data;
   const rfqHeader = evaluation?.rfqHeader;
   const suppliers = evaluation?.suppliers ?? [];
   const baseCurrency = rfqHeader?.baseCurrency || "SAR";
@@ -99,12 +159,8 @@ export default function Results() {
   const needsConversion = suppliers.some((s) => s.currency !== baseCurrency);
 
   const [fx, setFx] = useState({ status: "idle", rates: null, error: null });
-  const [assumptions, setAssumptions] = useState(
-    () => evaluation?.assumptions ?? DEFAULT_ASSUMPTIONS
-  );
-  const [weights, setWeights] = useState(
-    () => evaluation?.weights ?? DEFAULT_WEIGHTS
-  );
+  const [assumptions, setAssumptions] = useState(DEFAULT_ASSUMPTIONS);
+  const [weights, setWeights] = useState(DEFAULT_WEIGHTS);
   const normWeights = normalizeWeights(weights);
   const normalizedRows = useMemo(
     () => normalizeSuppliers(suppliers, assumptions),
@@ -116,8 +172,8 @@ export default function Results() {
   const storedWeights = evaluation?.weights;
   const storedAssumptions = evaluation?.assumptions;
 
-  // Switching to a different evaluation (id param change) without unmounting:
-  // drop the stale AI result and re-seed weights/assumptions from that record.
+  // A freshly loaded evaluation (or switching evaluations) re-seeds the tuned
+  // weights/assumptions from that record and drops any stale AI result.
   useEffect(() => {
     setAiResult(null);
     setWeights(storedWeights ?? DEFAULT_WEIGHTS);
@@ -125,11 +181,11 @@ export default function Results() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [evaluationId]);
 
-  // Persist tuned weights + assumptions onto the stored evaluation so they
-  // survive a reload and reopening this evaluation later.
+  // Persist tuned weights + assumptions back onto the stored evaluation.
   useEffect(() => {
-    if (evaluationId) updateEvaluation(evaluationId, { weights, assumptions });
-  }, [evaluationId, weights, assumptions]);
+    if (!evaluationId) return;
+    updateEvaluation(user, evaluationId, { weights, assumptions }).catch(() => {});
+  }, [user, evaluationId, weights, assumptions]);
 
   useEffect(() => {
     if (!needsConversion) {
@@ -150,6 +206,15 @@ export default function Results() {
       cancelled = true;
     };
   }, [baseCurrency, needsConversion]);
+
+  if (evalState.status === "loading" || authLoading) {
+    return (
+      <div className="max-w-6xl mx-auto px-6 py-24 flex items-center justify-center gap-3 text-navy">
+        <span className="inline-block h-5 w-5 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+        {t("results.loading")}
+      </div>
+    );
+  }
 
   if (!evaluation || suppliers.length === 0) {
     return (
@@ -214,34 +279,30 @@ export default function Results() {
         })
     : rankedSuppliers;
 
+  const runExport = async () => {
+    const { exportEvaluationWorkbook } = await import(
+      "../utils/exportWorkbook"
+    );
+    exportEvaluationWorkbook({
+      rfqHeader,
+      suppliers,
+      rankedSuppliers,
+      normalizedRows,
+      assumptions,
+      scoreCriteria: SCORING_CRITERIA.map((c) => ({
+        key: c.key,
+        label: t(`results.ai.criteria.${c.key}`),
+        weight: normWeights[c.key],
+      })),
+      t,
+    });
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-navy">{t("results.heading")}</h1>
-        <button
-          type="button"
-          onClick={async () => {
-            const { exportEvaluationWorkbook } = await import(
-              "../utils/exportWorkbook"
-            );
-            exportEvaluationWorkbook({
-              rfqHeader,
-              suppliers,
-              rankedSuppliers,
-              normalizedRows,
-              assumptions,
-              scoreCriteria: SCORING_CRITERIA.map((c) => ({
-                key: c.key,
-                label: t(`results.ai.criteria.${c.key}`),
-                weight: normWeights[c.key],
-              })),
-              t,
-            });
-          }}
-          className="bg-gold text-navy px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
-        >
-          {t("results.exportToExcel")}
-        </button>
+        <ExportButton onExport={runExport} />
       </div>
 
       {rfqHeader && (
@@ -373,7 +434,9 @@ export default function Results() {
         </table>
       </div>
 
-      <ScoringWeights weights={weights} onWeightsChange={setWeights} />
+      <FeatureGate feature="customWeights" title={t("results.weights.heading")}>
+        <ScoringWeights weights={weights} onWeightsChange={setWeights} />
+      </FeatureGate>
 
       <NormalizationTable
         rows={normalizedRows}
@@ -381,24 +444,30 @@ export default function Results() {
         onAssumptionsChange={setAssumptions}
       />
 
-      <AIScoringPanel
-        rfqHeader={rfqHeader}
-        normalizedRows={normalizedRows}
-        weights={weights}
-        onResult={setAiResult}
-      />
+      <FeatureGate feature="aiScoring" title={t("results.ai.heading")}>
+        <AIScoringPanel
+          rfqHeader={rfqHeader}
+          normalizedRows={normalizedRows}
+          weights={weights}
+          onResult={setAiResult}
+        />
+      </FeatureGate>
 
-      <ClarificationPanel
-        rfqHeader={rfqHeader}
-        normalizedRows={normalizedRows}
-        aiResult={aiResult}
-      />
+      <FeatureGate feature="aiScoring" title={t("results.clarify.heading")}>
+        <ClarificationPanel
+          rfqHeader={rfqHeader}
+          normalizedRows={normalizedRows}
+          aiResult={aiResult}
+        />
+      </FeatureGate>
 
-      <DecisionMemoPanel
-        rfqHeader={rfqHeader}
-        normalizedRows={normalizedRows}
-        aiResult={aiResult}
-      />
+      <FeatureGate feature="decisionMemo" title={t("results.memo.heading")}>
+        <DecisionMemoPanel
+          rfqHeader={rfqHeader}
+          normalizedRows={normalizedRows}
+          aiResult={aiResult}
+        />
+      </FeatureGate>
     </div>
   );
 }

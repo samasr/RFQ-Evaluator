@@ -2,11 +2,19 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import SupplierRow, { CURRENCIES } from "../components/SupplierRow";
 import QuoteUpload from "../components/QuoteUpload";
+import UpgradeModal from "../components/UpgradeModal";
 import { useLanguage } from "../context/LanguageContext";
+import { useAuth } from "../context/AuthContext";
 import { fetchExchangeRates } from "../utils/currency";
-import { saveEvaluation } from "../utils/storage";
+import {
+  saveEvaluation,
+  countEvaluationsThisMonth,
+} from "../lib/evaluationStore";
+import { planFeatures } from "../lib/planLimits";
 import { SAMPLE_RFQ_HEADER, getSampleSuppliers } from "../utils/sampleData";
 
+// Hard ceiling on the array regardless of plan (prevents a runaway table);
+// the per-plan cap is applied on top of this.
 export const MAX_SUPPLIERS = 10;
 
 const todayIsoDate = () => new Date().toISOString().slice(0, 10);
@@ -34,6 +42,28 @@ export default function NewEvaluation() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  const { user, plan } = useAuth();
+
+  const limits = planFeatures(plan);
+  const supplierCap = Math.min(MAX_SUPPLIERS, limits.maxSuppliers);
+  const monthlyLimit = limits.monthlyEvaluations;
+
+  const [monthlyUsed, setMonthlyUsed] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [upgradeFeature, setUpgradeFeature] = useState(null); // null | "suppliers" | "evaluations"
+
+  useEffect(() => {
+    let cancelled = false;
+    countEvaluationsThisMonth(user)
+      .then((n) => {
+        if (!cancelled) setMonthlyUsed(n);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const [rfqHeader, setRfqHeader] = useState({
     title: "",
@@ -96,9 +126,11 @@ export default function NewEvaluation() {
   };
 
   const addSupplier = () => {
-    setSuppliers((prev) =>
-      prev.length >= MAX_SUPPLIERS ? prev : [...prev, emptySupplier()]
-    );
+    if (suppliers.length >= supplierCap) {
+      if (supplierCap < MAX_SUPPLIERS) setUpgradeFeature("suppliers");
+      return;
+    }
+    setSuppliers((prev) => [...prev, emptySupplier()]);
   };
 
   const removeSupplier = (id) => {
@@ -130,7 +162,7 @@ export default function NewEvaluation() {
       );
       return [...nonEmpty, ...results.map((r) => r.supplier)].slice(
         0,
-        MAX_SUPPLIERS
+        supplierCap
       );
     });
     setAutoFilledByRow((prev) => {
@@ -140,9 +172,24 @@ export default function NewEvaluation() {
     });
   };
 
-  const handleSaveAndContinue = () => {
-    const id = saveEvaluation(rfqHeader, suppliers);
-    navigate(`/results/${id}`);
+  const handleSaveAndContinue = async () => {
+    setSaveError(null);
+    if (suppliers.length > supplierCap) {
+      setUpgradeFeature("suppliers");
+      return;
+    }
+    if (monthlyLimit !== Infinity && monthlyUsed >= monthlyLimit) {
+      setUpgradeFeature("evaluations");
+      return;
+    }
+    setSaving(true);
+    try {
+      const id = await saveEvaluation(user, rfqHeader, suppliers);
+      navigate(`/results/${id}`);
+    } catch (err) {
+      setSaveError(err.message || t("newEvaluation.saveError"));
+      setSaving(false);
+    }
   };
 
   const loadSampleData = () => {
@@ -233,7 +280,7 @@ export default function NewEvaluation() {
 
       <QuoteUpload
         rfqHeader={rfqHeader}
-        maxFiles={MAX_SUPPLIERS}
+        maxFiles={supplierCap}
         onSuppliersExtracted={handleSuppliersExtracted}
       />
 
@@ -244,10 +291,17 @@ export default function NewEvaluation() {
             {t("newEvaluation.suppliers")}
           </h2>
           <span className="text-sm font-medium text-gray-600">
-            {t("newEvaluation.suppliersAdded")}: {suppliers.length}/
-            {MAX_SUPPLIERS}
+            {t("newEvaluation.suppliersAdded")}: {suppliers.length}/{supplierCap}
           </span>
         </div>
+        {monthlyLimit !== Infinity && (
+          <p className="mb-4 text-xs text-gray-500">
+            {t("newEvaluation.monthlyUsage", {
+              used: monthlyUsed,
+              limit: monthlyLimit,
+            })}
+          </p>
+        )}
 
         <div className="overflow-x-auto border border-gray-200 rounded-lg">
           <table className="w-full text-left border-collapse">
@@ -320,11 +374,16 @@ export default function NewEvaluation() {
       </section>
 
       {/* PART C — Actions */}
-      <div className="flex items-center justify-between">
+      {saveError && (
+        <p className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+          {saveError}
+        </p>
+      )}
+      <div className="flex items-center justify-between gap-4">
         <button
           type="button"
           onClick={addSupplier}
-          disabled={suppliers.length >= MAX_SUPPLIERS}
+          disabled={suppliers.length >= supplierCap && supplierCap >= MAX_SUPPLIERS}
           className="bg-navy text-white px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {t("newEvaluation.addSupplier")}
@@ -333,11 +392,26 @@ export default function NewEvaluation() {
         <button
           type="button"
           onClick={handleSaveAndContinue}
-          className="bg-gold text-navy px-5 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
+          disabled={saving}
+          className="bg-gold text-navy px-5 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {t("newEvaluation.saveContinue")}
+          {saving
+            ? t("newEvaluation.saving")
+            : t("newEvaluation.saveContinue")}
         </button>
       </div>
+
+      <UpgradeModal
+        open={upgradeFeature !== null}
+        onClose={() => setUpgradeFeature(null)}
+        feature={
+          upgradeFeature === "suppliers"
+            ? "maxSuppliers"
+            : upgradeFeature === "evaluations"
+            ? "monthlyEvaluations"
+            : null
+        }
+      />
     </div>
   );
 }

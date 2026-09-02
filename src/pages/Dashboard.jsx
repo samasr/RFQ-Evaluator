@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
-import { listEvaluations } from "../utils/storage";
+import { useAuth } from "../context/AuthContext";
+import {
+  listEvaluations,
+  countEvaluationsThisMonth,
+} from "../lib/evaluationStore";
+import { planFeatures } from "../lib/planLimits";
+import PlanBadge from "../components/PlanBadge";
 import { fetchExchangeRates, convertToBase } from "../utils/currency";
 import { rankSuppliers } from "../utils/scoring";
 
@@ -126,10 +132,73 @@ function EvaluationSummary({ evaluation }) {
   );
 }
 
+function AccountHeader({ monthlyUsed }) {
+  const { t } = useLanguage();
+  const { isAuthConfigured, user, plan, displayName } = useAuth();
+  if (!isAuthConfigured || !user) return null;
+
+  const limit = planFeatures(plan).monthlyEvaluations;
+  const limitLabel = limit === Infinity ? "∞" : limit;
+
+  return (
+    <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+      <div className="flex items-center gap-2">
+        <span className="font-semibold text-navy">{displayName}</span>
+        <PlanBadge plan={plan} />
+      </div>
+      <p className="text-sm text-gray-600">
+        {t("dashboard.usage.thisMonth")}:{" "}
+        <span className="font-semibold text-navy">
+          {monthlyUsed} / {limitLabel}
+        </span>
+      </p>
+    </div>
+  );
+}
+
+function UpgradeBanner() {
+  const { t } = useLanguage();
+  const { isAuthConfigured, user, plan } = useAuth();
+  if (!isAuthConfigured || !user || plan !== "free") return null;
+  return (
+    <Link
+      to="/pricing"
+      className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-gold bg-gold/10 px-5 py-4 hover:bg-gold/20 transition-colors"
+    >
+      <span className="text-sm font-medium text-navy">
+        {t("dashboard.upgradeBanner.text")}
+      </span>
+      <span className="shrink-0 rounded-md bg-gold px-4 py-1.5 text-sm font-semibold text-navy">
+        {t("dashboard.upgradeBanner.cta")}
+      </span>
+    </Link>
+  );
+}
+
 export default function Dashboard() {
   const { t } = useLanguage();
-  const evaluations = listEvaluations();
-  const latest = evaluations[0] ?? null;
+  const { user, loading: authLoading } = useAuth();
+
+  const [state, setState] = useState({ status: "loading", list: [], monthly: 0 });
+
+  useEffect(() => {
+    if (authLoading) return;
+    let cancelled = false;
+    setState((s) => ({ ...s, status: "loading" }));
+    Promise.all([listEvaluations(user), countEvaluationsThisMonth(user)])
+      .then(([list, monthly]) => {
+        if (!cancelled) setState({ status: "ready", list, monthly });
+      })
+      .catch(() => {
+        if (!cancelled) setState({ status: "error", list: [], monthly: 0 });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading]);
+
+  const { status, list, monthly } = state;
+  const latest = list[0] ?? null;
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">
@@ -137,7 +206,23 @@ export default function Dashboard() {
         {t("dashboard.heading")}
       </h1>
 
-      {!latest && (
+      <AccountHeader monthlyUsed={monthly} />
+      <UpgradeBanner />
+
+      {status === "loading" && (
+        <div className="flex items-center gap-3 text-navy py-12">
+          <span className="inline-block h-5 w-5 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+          {t("dashboard.loading")}
+        </div>
+      )}
+
+      {status === "error" && (
+        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+          {t("dashboard.loadError")}
+        </p>
+      )}
+
+      {status === "ready" && !latest && (
         <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg">
           <p className="text-gray-600 mb-6">{t("dashboard.emptyMessage")}</p>
           <Link
@@ -149,9 +234,11 @@ export default function Dashboard() {
         </div>
       )}
 
-      {latest && <EvaluationSummary evaluation={latest} />}
+      {status === "ready" && latest && (
+        <EvaluationSummary evaluation={latest} />
+      )}
 
-      {evaluations.length > 0 && (
+      {status === "ready" && list.length > 0 && (
         <section>
           <h2 className="text-lg font-semibold text-navy mb-4">
             {t("dashboard.history.heading")}
@@ -179,7 +266,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {evaluations.map((evaluation) => (
+                {list.map((evaluation) => (
                   <tr
                     key={evaluation.id}
                     className="border-b border-gray-200 last:border-0"
