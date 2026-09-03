@@ -1,10 +1,16 @@
 import { useRef, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { extractSupplierFromFile, isSupportedQuoteFile } from "../utils/extraction";
+import { PlanRequiredError } from "../lib/aiProxy";
 
 const PROXY_URL = import.meta.env.VITE_AI_PROXY_URL;
 
-export default function QuoteUpload({ rfqHeader, maxFiles, onSuppliersExtracted }) {
+export default function QuoteUpload({
+  rfqHeader,
+  maxFiles,
+  onSuppliersExtracted,
+  onPlanRequired,
+}) {
   const { t } = useLanguage();
   const inputRef = useRef(null);
   const [files, setFiles] = useState([]); // { id, file, status, error }
@@ -58,6 +64,7 @@ export default function QuoteUpload({ rfqHeader, maxFiles, onSuppliersExtracted 
           );
           return result;
         } catch (err) {
+          if (err instanceof PlanRequiredError) onPlanRequired?.(err.message);
           done += 1;
           setProgress({ done, total: files.length });
           setFiles((prev) =>

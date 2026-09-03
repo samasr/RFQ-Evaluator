@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { generateDecisionMemo, formatMemoAsPlainText } from "../utils/decisionMemo";
+import { PlanRequiredError } from "../lib/aiProxy";
+import UpgradeModal from "./UpgradeModal";
 
 const PROXY_URL = import.meta.env.VITE_AI_PROXY_URL;
 
@@ -16,6 +18,7 @@ function MetaRow({ label, value }) {
 export default function DecisionMemoPanel({ rfqHeader, normalizedRows, aiResult }) {
   const { t } = useLanguage();
   const [state, setState] = useState({ status: "idle", data: null, error: null });
+  const [planError, setPlanError] = useState(null);
   const [memoLang, setMemoLang] = useState("en");
   const [copied, setCopied] = useState(false);
 
@@ -34,6 +37,11 @@ export default function DecisionMemoPanel({ rfqHeader, normalizedRows, aiResult 
       });
       setState({ status: "success", data: result, error: null });
     } catch (err) {
+      if (err instanceof PlanRequiredError) {
+        setState({ status: "idle", data: null, error: null });
+        setPlanError(err.message);
+        return;
+      }
       setState({ status: "error", data: null, error: err.message });
     }
   };
@@ -104,6 +112,12 @@ export default function DecisionMemoPanel({ rfqHeader, normalizedRows, aiResult 
           {t("results.memo.notConfigured")}
         </p>
       )}
+
+      <UpgradeModal
+        open={planError !== null}
+        onClose={() => setPlanError(null)}
+        message={planError}
+      />
 
       {state.status === "loading" && (
         <div className="no-print flex items-center gap-3 text-sm text-navy bg-gray-50 border border-gray-200 rounded-md px-4 py-4 mb-4">

@@ -52,6 +52,8 @@ export default function NewEvaluation() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [upgradeFeature, setUpgradeFeature] = useState(null); // null | "suppliers" | "evaluations"
+  // Message from the AI proxy when a plan-gated quote extraction is refused (403).
+  const [planMessage, setPlanMessage] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -282,6 +284,7 @@ export default function NewEvaluation() {
         rfqHeader={rfqHeader}
         maxFiles={supplierCap}
         onSuppliersExtracted={handleSuppliersExtracted}
+        onPlanRequired={setPlanMessage}
       />
 
       {/* PART B — Supplier Entry Table */}
@@ -359,6 +362,7 @@ export default function NewEvaluation() {
                   rfqHeader={rfqHeader}
                   baseCurrency={rfqHeader.baseCurrency}
                   fxRates={fx.status === "success" ? fx.rates : null}
+                  onPlanRequired={setPlanMessage}
                 />
               ))}
               {suppliers.length === 0 && (
@@ -411,6 +415,12 @@ export default function NewEvaluation() {
             ? "monthlyEvaluations"
             : null
         }
+      />
+
+      <UpgradeModal
+        open={planMessage !== null}
+        onClose={() => setPlanMessage(null)}
+        message={planMessage}
       />
     </div>
   );

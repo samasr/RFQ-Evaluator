@@ -2,7 +2,7 @@
 // entered/extracted supplier quotes into a per-supplier list of clarification
 // questions the buyer can send back to each supplier before awarding.
 
-import { aiProxyHeaders, throwIfUnauthorized } from "../lib/aiProxy";
+import { aiProxyHeaders, assertProxyResponseOk } from "../lib/aiProxy";
 
 function buildSupplierData(normalizedRows, aiResult) {
   const aiByName = new Map(
@@ -86,9 +86,9 @@ export async function generateClarificationQuestions({
   const response = await fetch(proxyUrl, {
     method: "POST",
     headers: await aiProxyHeaders(),
-    body: JSON.stringify({ prompt, maxTokens: 3072 }),
+    body: JSON.stringify({ prompt, maxTokens: 3072, feature: "clarification" }),
   });
-  throwIfUnauthorized(response);
+  await assertProxyResponseOk(response);
 
   const data = await response.json().catch(() => null);
   if (!response.ok) {

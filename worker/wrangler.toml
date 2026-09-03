@@ -5,9 +5,12 @@ compatibility_flags = ["nodejs_compat"]
 
 # Secrets — set each with `npx wrangler secret put <NAME>`; never commit them:
 #   ANTHROPIC_API_KEY          (AI proxy)
-#   SUPABASE_URL               (billing — e.g. https://<ref>.supabase.co)
-#   SUPABASE_ANON_KEY          (billing — verifies the caller's JWT)
-#   SUPABASE_SERVICE_ROLE_KEY  (billing — applies the plan upgrade, bypasses RLS)
+#   SUPABASE_URL               (auth + billing — e.g. https://<ref>.supabase.co)
+#   SUPABASE_ANON_KEY          (auth + billing — verifies the caller's JWT)
+#   SUPABASE_SERVICE_ROLE_KEY  (billing — applies the plan upgrade; AI proxy —
+#                               reads the caller's plan for server-side
+#                               enforcement. Bypasses RLS. Without it the AI
+#                               proxy stays auth-only, no plan gate.)
 #   STRIPE_SECRET_KEY          (billing — sk_test_… / sk_live_…)
 [vars]
 # Comma-separated list of origins allowed to call this proxy.

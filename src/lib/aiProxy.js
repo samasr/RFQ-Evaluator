@@ -21,12 +21,32 @@ export async function aiProxyHeaders() {
   return headers;
 }
 
-// Call right after a proxy fetch: if the Worker rejected the request for lack
-// of a valid session, bounce the user to /login and surface a clear error.
-export function throwIfUnauthorized(response) {
-  if (response.status !== 401) return;
-  if (typeof window !== "undefined") {
-    window.location.hash = "#/login";
+// Thrown when the Worker rejects a request because the user's plan doesn't
+// include the feature (HTTP 403 + { code: "plan_required" }). Carries the
+// Worker's own upgrade message so callers can show it in the UpgradeModal.
+export class PlanRequiredError extends Error {
+  constructor(message) {
+    super(message || "This feature requires the Pro plan.");
+    this.name = "PlanRequiredError";
+    this.planRequired = true;
   }
-  throw new Error("Please sign in to use AI features.");
+}
+
+// Call right after a proxy fetch, before treating the response as a success:
+//  - 401 → bounce the user to /login and throw a clear error
+//  - 403 plan gate → throw PlanRequiredError with the Worker's message
+// Any other status is left for the caller to handle off response.ok.
+export async function assertProxyResponseOk(response) {
+  if (response.status === 401) {
+    if (typeof window !== "undefined") {
+      window.location.hash = "#/login";
+    }
+    throw new Error("Please sign in to use AI features.");
+  }
+  if (response.status === 403) {
+    const body = await response.clone().json().catch(() => null);
+    if (body && body.code === "plan_required") {
+      throw new PlanRequiredError(body.error);
+    }
+  }
 }

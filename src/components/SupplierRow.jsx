@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { convertToBase, formatRate } from "../utils/currency";
 import { extractSupplierFromFile, isSupportedQuoteFile } from "../utils/extraction";
+import { PlanRequiredError } from "../lib/aiProxy";
 
 const PROXY_URL = import.meta.env.VITE_AI_PROXY_URL;
 
@@ -55,6 +56,7 @@ export default function SupplierRow({
   rfqHeader,
   baseCurrency,
   fxRates,
+  onPlanRequired,
 }) {
   const { t } = useLanguage();
   const set = (field) => (e) => onChange(supplier.id, field, e.target.value);
@@ -95,6 +97,11 @@ export default function SupplierRow({
       onApplyExtraction(supplier.id, extracted, filledFields);
       setExtract({ status: "success", error: null });
     } catch (err) {
+      if (err instanceof PlanRequiredError) {
+        setExtract({ status: "idle", error: null });
+        onPlanRequired?.(err.message);
+        return;
+      }
       setExtract({ status: "error", error: err.message });
     }
   };

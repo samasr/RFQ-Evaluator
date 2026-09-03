@@ -4,6 +4,8 @@ import {
   generateClarificationQuestions,
   formatSupplierQuestionsAsText,
 } from "../utils/clarificationQuestions";
+import { PlanRequiredError } from "../lib/aiProxy";
+import UpgradeModal from "./UpgradeModal";
 
 const PROXY_URL = import.meta.env.VITE_AI_PROXY_URL;
 
@@ -94,6 +96,7 @@ function SupplierCard({ supplier, rfqTitle, t }) {
 export default function ClarificationPanel({ rfqHeader, normalizedRows, aiResult }) {
   const { t } = useLanguage();
   const [state, setState] = useState({ status: "idle", data: null, error: null });
+  const [planError, setPlanError] = useState(null);
   const [copiedAll, setCopiedAll] = useState(false);
 
   const run = async () => {
@@ -107,6 +110,11 @@ export default function ClarificationPanel({ rfqHeader, normalizedRows, aiResult
       });
       setState({ status: "success", data: suppliers, error: null });
     } catch (err) {
+      if (err instanceof PlanRequiredError) {
+        setState({ status: "idle", data: null, error: null });
+        setPlanError(err.message);
+        return;
+      }
       setState({ status: "error", data: null, error: err.message });
     }
   };
@@ -161,6 +169,12 @@ export default function ClarificationPanel({ rfqHeader, normalizedRows, aiResult
           {t("results.clarify.notConfigured")}
         </p>
       )}
+
+      <UpgradeModal
+        open={planError !== null}
+        onClose={() => setPlanError(null)}
+        message={planError}
+      />
 
       {state.status === "loading" && (
         <div className="flex items-center gap-3 text-sm text-navy bg-gray-50 border border-gray-200 rounded-md px-4 py-4 mb-4">

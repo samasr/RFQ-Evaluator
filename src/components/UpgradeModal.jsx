@@ -12,7 +12,10 @@ const COMPARISON = [
   { key: "team", free: "—", pro: "—", team: "5" },
 ];
 
-export default function UpgradeModal({ open, onClose, feature }) {
+// `message`, when given, is shown verbatim as the subtitle (e.g. the AI proxy's
+// own "… requires the Pro plan" text on a server-side 403). Otherwise `feature`
+// drives the translated "… isn't available on your current plan" line.
+export default function UpgradeModal({ open, onClose, feature, message }) {
   const { t } = useLanguage();
   const navigate = useNavigate();
   if (!open) return null;
@@ -40,13 +43,15 @@ export default function UpgradeModal({ open, onClose, feature }) {
             <h2 className="text-lg font-bold text-navy">
               {t("plan.upgrade.title")}
             </h2>
-            {feature && (
+            {message ? (
+              <p className="mt-1 text-sm text-gray-500">{message}</p>
+            ) : feature ? (
               <p className="mt-1 text-sm text-gray-500">
                 {t("plan.upgrade.featureLocked", {
                   feature: t(`plan.features.${feature}`),
                 })}
               </p>
-            )}
+            ) : null}
           </div>
           <button
             type="button"

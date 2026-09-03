@@ -5,7 +5,7 @@
 // tables) so the UI can render real tables and keep the memo tight enough
 // for a senior-leadership skim rather than a wall of prose.
 
-import { aiProxyHeaders, throwIfUnauthorized } from "../lib/aiProxy";
+import { aiProxyHeaders, assertProxyResponseOk } from "../lib/aiProxy";
 
 function buildSupplierData(normalizedRows, aiResult) {
   const aiByName = new Map(
@@ -101,9 +101,9 @@ export async function generateDecisionMemo({ rfqHeader, normalizedRows, aiResult
   const response = await fetch(proxyUrl, {
     method: "POST",
     headers: await aiProxyHeaders(),
-    body: JSON.stringify({ prompt, maxTokens: 4096 }),
+    body: JSON.stringify({ prompt, maxTokens: 4096, feature: "decisionMemo" }),
   });
-  throwIfUnauthorized(response);
+  await assertProxyResponseOk(response);
 
   const data = await response.json().catch(() => null);
 
