@@ -7,8 +7,9 @@ export interface Env {
   RL_IP: RateLimit;
   RL_GLOBAL: RateLimit;
 
-  // Billing (Phase 7b) — see wrangler.toml. The *_SECRET_KEY and
-  // SERVICE_ROLE key are wrangler secrets, never committed.
+  // Supabase — see wrangler.toml. Used to authenticate AI-proxy callers and
+  // by the billing routes (Phase 7b). The *_SECRET_KEY and SERVICE_ROLE key
+  // are wrangler secrets, never committed.
   SUPABASE_URL?: string;
   SUPABASE_ANON_KEY?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
@@ -48,4 +49,33 @@ export function jsonResponse(
       ...extraHeaders,
     },
   });
+}
+
+// True once the Worker has the Supabase config it needs to verify session
+// tokens. When false (e.g. a bare `wrangler dev`), callers fall back to the
+// origin-only check.
+export function isSupabaseConfigured(env: Env): boolean {
+  return Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY);
+}
+
+// Verifies a Supabase access token from `Authorization: Bearer <jwt>` by asking
+// the Supabase Auth API who it belongs to. Returns the user, or null when the
+// token is missing, malformed, expired, or otherwise rejected. Never throws.
+export async function verifySupabaseToken(
+  request: Request,
+  env: Env
+): Promise<{ id: string; email: string } | null> {
+  const auth = request.headers.get("Authorization") || "";
+  if (!auth.startsWith("Bearer ")) return null;
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return null;
+  try {
+    const res = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { Authorization: auth, apikey: env.SUPABASE_ANON_KEY },
+    });
+    if (!res.ok) return null;
+    const user = (await res.json()) as { id?: string; email?: string };
+    return user.id ? { id: user.id, email: user.email || "" } : null;
+  } catch {
+    return null;
+  }
 }

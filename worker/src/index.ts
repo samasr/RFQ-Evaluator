@@ -4,6 +4,8 @@ import {
   corsHeaders,
   jsonResponse,
   resolveAllowedOrigin,
+  isSupabaseConfigured,
+  verifySupabaseToken,
 } from "./http";
 import { handleBilling } from "./billing";
 
@@ -60,6 +62,23 @@ async function handleAiProxy(request: Request, env: Env): Promise<Response> {
       origin,
       { "Retry-After": "60" }
     );
+  }
+
+  // Authentication: on a Supabase-configured proxy (production) every request
+  // must carry a valid Supabase session token. This is what actually protects
+  // the Anthropic key — the Origin check above is spoofable by non-browser
+  // clients. A proxy with no Supabase config (a bare `wrangler dev`) skips this
+  // and keeps the origin-only check so the local dev workflow isn't blocked.
+  // verifySupabaseToken also yields the user id, kept here for future per-user
+  // limits.
+  if (isSupabaseConfigured(env)) {
+    if (!(await verifySupabaseToken(request, env))) {
+      return jsonResponse(
+        { error: "Sign in required to use AI features." },
+        401,
+        origin
+      );
+    }
   }
 
   let body: RequestBody;
