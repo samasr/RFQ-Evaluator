@@ -12,6 +12,8 @@ compatibility_flags = ["nodejs_compat"]
 #                               enforcement. Bypasses RLS. Without it the AI
 #                               proxy stays auth-only, no plan gate.)
 #   STRIPE_SECRET_KEY          (billing — sk_test_… / sk_live_…)
+#   STRIPE_WEBHOOK_SECRET      (billing — verifies POST /billing/stripe/webhook
+#                               signatures; whsec_… from the Stripe dashboard)
 [vars]
 # Comma-separated list of origins allowed to call this proxy.
 ALLOWED_ORIGINS = "https://rfqranker.com,https://www.rfqranker.com,https://samasr.github.io,http://localhost:5173,http://localhost:5174"
