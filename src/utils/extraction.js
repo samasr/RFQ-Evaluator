@@ -8,6 +8,7 @@ import {
   SASO_STATUSES,
   DELIVERY_TERMS,
 } from "../components/SupplierRow";
+import { aiProxyHeaders, throwIfUnauthorized } from "../lib/aiProxy";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8MB
 
@@ -182,13 +183,14 @@ export async function extractSupplierFromFile({ file, rfqHeader, proxyUrl }) {
 
   const response = await fetch(proxyUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await aiProxyHeaders(),
     body: JSON.stringify({
       prompt,
       documents: [{ mediaType: file.type, data }],
       maxTokens: 1024,
     }),
   });
+  throwIfUnauthorized(response);
 
   const responseData = await response.json().catch(() => null);
   if (!response.ok) {
