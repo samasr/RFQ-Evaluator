@@ -1,12 +1,17 @@
-// Billing routes for the AI-proxy Worker (Phase 7b).
+// Billing routes for the AI-proxy Worker (Phase 7b + H2).
 //
-//   POST /billing/stripe/create-session  { plan }            -> { url }
-//   POST /billing/stripe/verify          { sessionId }       -> { plan }
+//   POST /billing/stripe/create-session  { plan }       -> { url }
+//   POST /billing/stripe/verify          { sessionId }  -> { plan }
+//   POST /billing/stripe/webhook         (Stripe event) -> { received: true }
 //
-// Every route requires a Supabase access token in `Authorization: Bearer …`.
-// Plan upgrades are only applied AFTER the payment is independently verified
-// with the provider (paid + correct amount + belongs to this user). The
-// client-supplied plan is never trusted on its own.
+// create-session / verify require a Supabase access token in
+// `Authorization: Bearer …`; the webhook is authenticated by its Stripe
+// signature instead. Plan upgrades are only applied AFTER the payment is
+// independently verified (paid + correct amount + belongs to this user); the
+// client-supplied plan is never trusted on its own. Every upgrade goes through
+// applyPaidSession(), which records the payment in public.payments and is
+// idempotent on the Stripe session id — a replayed session never upgrades
+// twice.
 
 import { Env, corsHeaders, jsonResponse, resolveAllowedOrigin } from "./http";
 
@@ -59,28 +64,188 @@ async function authUser(
   return { id: user.id, email: user.email || "" };
 }
 
-// Promotes the user's plan using the service-role key (bypasses RLS). The
-// plan-change guard trigger in the DB allows this only for the service role.
-async function upgradePlan(env: Env, userId: string, plan: PlanId): Promise<void> {
+// Base URL + auth headers for PostgREST calls made with the service-role key
+// (bypasses RLS). Throws 503 when the Worker isn't configured for billing.
+function serviceRest(env: Env): { base: string; headers: Record<string, string> } {
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new HttpError(503, "Billing is not configured");
   }
+  return {
+    base: env.SUPABASE_URL,
+    headers: {
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+    },
+  };
+}
+
+// Promotes the user's plan using the service-role key (bypasses RLS). The
+// plan-change guard trigger in the DB allows this only for the service role.
+async function upgradePlan(env: Env, userId: string, plan: PlanId): Promise<void> {
+  const { base, headers } = serviceRest(env);
   const res = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/users?id=eq.${encodeURIComponent(userId)}`,
+    `${base}/rest/v1/users?id=eq.${encodeURIComponent(userId)}`,
     {
       method: "PATCH",
-      headers: {
-        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-        "Content-Type": "application/json",
-        Prefer: "return=minimal",
-      },
+      headers: { ...headers, "Content-Type": "application/json", Prefer: "return=minimal" },
       body: JSON.stringify({ plan }),
     }
   );
   if (!res.ok) {
     throw new HttpError(502, `Could not update plan (${res.status})`);
   }
+}
+
+// ── Payment audit trail + idempotency (H2) ───────────────────────────────────
+
+type PaymentStatus = "pending" | "completed" | "failed";
+
+interface PaymentRow {
+  user_id: string;
+  plan: PlanId;
+  status: PaymentStatus;
+}
+
+// A Stripe session we've been asked to act on, normalised from either the
+// /verify call or a webhook event.
+interface PaidSession {
+  id: string;
+  userId: string;
+  amountTotal: number;
+  currency: string;
+  plan: PlanId;
+}
+
+async function findPayment(
+  env: Env,
+  providerPaymentId: string
+): Promise<PaymentRow | null> {
+  const { base, headers } = serviceRest(env);
+  const res = await fetch(
+    `${base}/rest/v1/payments?provider=eq.stripe&provider_payment_id=eq.${encodeURIComponent(
+      providerPaymentId
+    )}&select=user_id,plan,status&limit=1`,
+    { headers }
+  );
+  if (!res.ok) throw new HttpError(502, `Could not read payments (${res.status})`);
+  const rows = (await res.json()) as PaymentRow[];
+  return rows[0] ?? null;
+}
+
+// Inserts the row as `pending`. A 409 means a concurrent call already inserted
+// it (the UNIQUE constraint) — harmless, we carry on and (re)apply the upgrade.
+async function insertPendingPayment(env: Env, s: PaidSession): Promise<void> {
+  const { base, headers } = serviceRest(env);
+  const res = await fetch(`${base}/rest/v1/payments`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json", Prefer: "return=minimal" },
+    body: JSON.stringify({
+      user_id: s.userId,
+      provider: "stripe",
+      provider_payment_id: s.id,
+      amount: s.amountTotal,
+      currency: s.currency,
+      plan: s.plan,
+      status: "pending",
+    }),
+  });
+  if (res.status === 409) return;
+  if (!res.ok) throw new HttpError(502, `Could not record payment (${res.status})`);
+}
+
+async function setPaymentStatus(
+  env: Env,
+  providerPaymentId: string,
+  status: PaymentStatus
+): Promise<void> {
+  const { base, headers } = serviceRest(env);
+  const res = await fetch(
+    `${base}/rest/v1/payments?provider=eq.stripe&provider_payment_id=eq.${encodeURIComponent(
+      providerPaymentId
+    )}`,
+    {
+      method: "PATCH",
+      headers: { ...headers, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ status }),
+    }
+  );
+  if (!res.ok) throw new HttpError(502, `Could not update payment (${res.status})`);
+}
+
+// The single idempotent path both /verify and the webhook go through: record
+// the payment once, apply the plan upgrade once. Safe to call repeatedly for
+// the same session id — a completed row short-circuits, a pending row (e.g. the
+// user closed the tab mid-verify) just re-applies the idempotent upgrade.
+async function applyPaidSession(
+  env: Env,
+  s: PaidSession
+): Promise<{ plan: PlanId; alreadyProcessed: boolean }> {
+  const existing = await findPayment(env, s.id);
+  if (existing && existing.status === "completed") {
+    return { plan: existing.plan, alreadyProcessed: true };
+  }
+  if (!existing) {
+    await insertPendingPayment(env, s);
+  }
+  try {
+    await upgradePlan(env, s.userId, s.plan);
+  } catch (err) {
+    await setPaymentStatus(env, s.id, "failed").catch(() => {});
+    throw err;
+  }
+  await setPaymentStatus(env, s.id, "completed");
+  return { plan: s.plan, alreadyProcessed: Boolean(existing) };
+}
+
+// ── Stripe webhook signature ─────────────────────────────────────────────────
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+}
+
+// Verifies a `Stripe-Signature` header (`t=…,v1=…[,v1=…]`) against the raw
+// request body, per Stripe's scheme: HMAC-SHA256 of `${t}.${payload}` keyed
+// with the endpoint's signing secret, plus a timestamp tolerance.
+async function verifyStripeSignature(
+  payload: string,
+  header: string,
+  secret: string,
+  toleranceSec = 300
+): Promise<boolean> {
+  if (!header) return false;
+  let t = "";
+  const v1: string[] = [];
+  for (const part of header.split(",")) {
+    const eq = part.indexOf("=");
+    if (eq === -1) continue;
+    const key = part.slice(0, eq).trim();
+    const val = part.slice(eq + 1).trim();
+    if (key === "t") t = val;
+    else if (key === "v1") v1.push(val);
+  }
+  const ts = Number(t);
+  if (!t || v1.length === 0 || !Number.isFinite(ts)) return false;
+  if (Math.abs(Date.now() / 1000 - ts) > toleranceSec) return false;
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const mac = await crypto.subtle.sign(
+    "HMAC",
+    cryptoKey,
+    new TextEncoder().encode(`${t}.${payload}`)
+  );
+  const expected = [...new Uint8Array(mac)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return v1.some((sig) => timingSafeEqual(sig, expected));
 }
 
 async function readJson<T>(request: Request): Promise<T> {
@@ -161,8 +326,82 @@ async function stripeVerify(
     throw new HttpError(422, "Unrecognised payment amount");
   }
 
-  await upgradePlan(env, user.id, plan);
-  return { plan };
+  // Idempotent: records the payment once and upgrades once, however many times
+  // this session id is submitted (double-clicks, refreshes, or the webhook
+  // having already handled it).
+  const { plan: applied } = await applyPaidSession(env, {
+    id: sessionId,
+    userId: user.id,
+    amountTotal: s.amount_total || 0,
+    currency: (s.currency || "sar").toUpperCase(),
+    plan,
+  });
+  return { plan: applied };
+}
+
+// ── Stripe webhook ───────────────────────────────────────────────────────────
+
+// POST /billing/stripe/webhook — called by Stripe server-to-server, so there's
+// no Origin and no Supabase JWT; the Stripe-Signature header is the auth. This
+// is the backstop that upgrades the account even if the user closed the tab
+// before /verify ran.
+async function handleStripeWebhook(request: Request, env: Env): Promise<Response> {
+  const json = (body: unknown, status: number) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (!env.STRIPE_WEBHOOK_SECRET) return json({ error: "Webhook not configured" }, 503);
+
+  const raw = await request.text();
+  const signature = request.headers.get("Stripe-Signature") || "";
+  if (!(await verifyStripeSignature(raw, signature, env.STRIPE_WEBHOOK_SECRET))) {
+    return json({ error: "Invalid signature" }, 400);
+  }
+
+  let event: {
+    type?: string;
+    data?: { object?: Record<string, any> };
+  };
+  try {
+    event = JSON.parse(raw);
+  } catch {
+    return json({ error: "Invalid JSON" }, 400);
+  }
+
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data?.object ?? {};
+      const userId: string | undefined =
+        session.client_reference_id || session.metadata?.user_id;
+      const plan = planForAmount(session.amount_total || 0);
+      const metaPlan: string | undefined = session.metadata?.plan;
+      if (
+        session.payment_status === "paid" &&
+        userId &&
+        plan &&
+        (!metaPlan || metaPlan === plan) &&
+        typeof session.id === "string"
+      ) {
+        await applyPaidSession(env, {
+          id: session.id,
+          userId,
+          amountTotal: session.amount_total || 0,
+          currency: (session.currency || "sar").toUpperCase(),
+          plan,
+        });
+      }
+    }
+  } catch (err) {
+    // Our DB write failed — return non-2xx so Stripe retries the delivery.
+    const status = err instanceof HttpError ? err.status : 500;
+    const message = err instanceof Error ? err.message : "Webhook processing failed";
+    return json({ error: message }, status);
+  }
+
+  return json({ received: true }, 200);
 }
 
 // ── Router ───────────────────────────────────────────────────────────────────
@@ -176,7 +415,11 @@ const ROUTES: Record<
 };
 
 export function isBillingPath(pathname: string): boolean {
-  return pathname in ROUTES || pathname === "/billing" ;
+  return (
+    pathname in ROUTES ||
+    pathname === "/billing" ||
+    pathname === "/billing/stripe/webhook"
+  );
 }
 
 export async function handleBilling(
@@ -184,6 +427,12 @@ export async function handleBilling(
   env: Env,
   pathname: string
 ): Promise<Response> {
+  // The webhook is server-to-server from Stripe: no browser Origin, no JWT,
+  // signature-verified instead. It must skip the origin/method gate below.
+  if (pathname === "/billing/stripe/webhook") {
+    return handleStripeWebhook(request, env);
+  }
+
   const origin = resolveAllowedOrigin(request, env);
 
   if (request.method === "OPTIONS") {
