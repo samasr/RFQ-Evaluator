@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { CRITERIA_KEYS, scoreSuppliersWithAI } from "../utils/aiScoring";
+import { PlanRequiredError } from "../lib/aiProxy";
+import UpgradeModal from "./UpgradeModal";
 
 const PROXY_URL = import.meta.env.VITE_AI_PROXY_URL;
 
@@ -36,6 +38,7 @@ function ScoreBar({ label, score }) {
 export default function AIScoringPanel({ rfqHeader, normalizedRows, weights, onResult }) {
   const { t } = useLanguage();
   const [state, setState] = useState({ status: "idle", data: null, error: null });
+  const [planError, setPlanError] = useState(null);
 
   const runScoring = async () => {
     setState({ status: "loading", data: null, error: null });
@@ -49,8 +52,13 @@ export default function AIScoringPanel({ rfqHeader, normalizedRows, weights, onR
       setState({ status: "success", data: result, error: null });
       onResult?.(result);
     } catch (err) {
-      setState({ status: "error", data: null, error: err.message });
       onResult?.(null);
+      if (err instanceof PlanRequiredError) {
+        setState({ status: "idle", data: null, error: null });
+        setPlanError(err.message);
+        return;
+      }
+      setState({ status: "error", data: null, error: err.message });
     }
   };
 
@@ -90,6 +98,12 @@ export default function AIScoringPanel({ rfqHeader, normalizedRows, weights, onR
           {t("results.ai.error", { error: state.error })}
         </p>
       )}
+
+      <UpgradeModal
+        open={planError !== null}
+        onClose={() => setPlanError(null)}
+        message={planError}
+      />
 
       {state.status === "success" && state.data && (
         <>

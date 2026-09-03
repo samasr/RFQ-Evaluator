@@ -79,3 +79,35 @@ export async function verifySupabaseToken(
     return null;
   }
 }
+
+// True when the Worker can enforce plan limits server-side (C3): on top of the
+// basic Supabase config it needs the service-role key to read `public.users`.
+// A Worker without it keeps the auth-only behaviour rather than blocking
+// everyone.
+export function isPlanEnforced(env: Env): boolean {
+  return isSupabaseConfigured(env) && Boolean(env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+// Reads the caller's plan from `public.users` with the service-role key (so the
+// lookup isn't subject to RLS). Returns the plan string, or "free" when the
+// profile row is missing. Throws on a transport/HTTP failure so the caller can
+// tell "definitely not paid" apart from "couldn't check".
+export async function fetchUserPlan(env: Env, userId: string): Promise<string> {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("plan lookup not configured");
+  }
+  const res = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/users?id=eq.${encodeURIComponent(
+      userId
+    )}&select=plan`,
+    {
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+    }
+  );
+  if (!res.ok) throw new Error(`plan lookup failed (${res.status})`);
+  const rows = (await res.json()) as Array<{ plan?: string }>;
+  return rows[0]?.plan || "free";
+}

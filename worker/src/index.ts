@@ -5,7 +5,9 @@ import {
   jsonResponse,
   resolveAllowedOrigin,
   isSupabaseConfigured,
+  isPlanEnforced,
   verifySupabaseToken,
+  fetchUserPlan,
 } from "./http";
 import { handleBilling } from "./billing";
 
@@ -16,6 +18,25 @@ const MAX_PROMPT_CHARS = 40000;
 const MAX_DOCUMENTS = 10;
 const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024; // ~15MB base64 per file
 
+// Plans that unlock the AI proxy. Everything the proxy does (scoring, memos,
+// clarifications, PDF extraction) is a paid feature — the free plan can't reach
+// Anthropic through here at all. Kept in lockstep with src/lib/planLimits.js.
+const PAID_PLANS = new Set(["pro", "team"]);
+
+// Frontend-supplied `feature` tag -> label for the 403 message. The gate rule
+// is uniform (paid plan required), so this only tailors the wording.
+const FEATURE_LABEL: Record<string, string> = {
+  aiScoring: "AI scoring",
+  decisionMemo: "Decision memo generation",
+  clarification: "Clarification questions",
+  extraction: "PDF quote extraction",
+};
+
+function planGateMessage(feature: string | undefined): string {
+  const label = (feature && FEATURE_LABEL[feature]) || "This AI feature";
+  return `${label} requires the Pro plan. Upgrade at rfqranker.com/pricing`;
+}
+
 interface DocumentInput {
   mediaType: string;
   data: string; // base64, no data: URI prefix
@@ -25,6 +46,7 @@ interface RequestBody {
   prompt?: string;
   documents?: DocumentInput[];
   maxTokens?: number;
+  feature?: string;
 }
 
 function isImageMediaType(mediaType: string): boolean {
@@ -69,16 +91,17 @@ async function handleAiProxy(request: Request, env: Env): Promise<Response> {
   // the Anthropic key — the Origin check above is spoofable by non-browser
   // clients. A proxy with no Supabase config (a bare `wrangler dev`) skips this
   // and keeps the origin-only check so the local dev workflow isn't blocked.
-  // verifySupabaseToken also yields the user id, kept here for future per-user
-  // limits.
+  let userId: string | null = null;
   if (isSupabaseConfigured(env)) {
-    if (!(await verifySupabaseToken(request, env))) {
+    const user = await verifySupabaseToken(request, env);
+    if (!user) {
       return jsonResponse(
         { error: "Sign in required to use AI features." },
         401,
         origin
       );
     }
+    userId = user.id;
   }
 
   let body: RequestBody;
@@ -86,6 +109,30 @@ async function handleAiProxy(request: Request, env: Env): Promise<Response> {
     body = await request.json();
   } catch {
     return jsonResponse({ error: "Invalid JSON body" }, 400, origin);
+  }
+
+  // Plan enforcement (C3): the plan lives in `public.users`, not in the JWT, so
+  // it's checked here rather than trusting the client-side gate in
+  // planLimits.js / FeatureGate. Only runs when the Worker has the service-role
+  // key; without it the proxy stays auth-only.
+  if (userId && isPlanEnforced(env)) {
+    let plan: string;
+    try {
+      plan = await fetchUserPlan(env, userId);
+    } catch {
+      return jsonResponse(
+        { error: "Couldn't verify your plan — try again in a moment." },
+        503,
+        origin
+      );
+    }
+    if (!PAID_PLANS.has(plan)) {
+      return jsonResponse(
+        { error: planGateMessage(body.feature), code: "plan_required" },
+        403,
+        origin
+      );
+    }
   }
 
   if (!body.prompt || typeof body.prompt !== "string") {

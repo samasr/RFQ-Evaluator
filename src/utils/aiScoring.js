@@ -2,7 +2,7 @@
 // never holds an Anthropic API key, only this proxy's public URL.
 
 import { SCORING_CRITERIA, normalizeWeights } from "./scoring";
-import { aiProxyHeaders, throwIfUnauthorized } from "../lib/aiProxy";
+import { aiProxyHeaders, assertProxyResponseOk } from "../lib/aiProxy";
 
 export const CRITERIA_KEYS = ["price", "leadTime", "payment", "saso", "moq", "completeness"];
 
@@ -116,9 +116,9 @@ export async function scoreSuppliersWithAI({ rfqHeader, normalizedRows, weights,
   const response = await fetch(proxyUrl, {
     method: "POST",
     headers: await aiProxyHeaders(),
-    body: JSON.stringify({ prompt, maxTokens: 4096 }),
+    body: JSON.stringify({ prompt, maxTokens: 4096, feature: "aiScoring" }),
   });
-  throwIfUnauthorized(response);
+  await assertProxyResponseOk(response);
 
   const data = await response.json().catch(() => null);
 
