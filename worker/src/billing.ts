@@ -2,7 +2,6 @@
 //
 //   POST /billing/stripe/create-session  { plan }            -> { url }
 //   POST /billing/stripe/verify          { sessionId }       -> { plan }
-//   POST /billing/moyasar/verify         { paymentId }       -> { plan }
 //
 // Every route requires a Supabase access token in `Authorization: Bearer …`.
 // Plan upgrades are only applied AFTER the payment is independently verified
@@ -13,8 +12,7 @@ import { Env, corsHeaders, jsonResponse, resolveAllowedOrigin } from "./http";
 
 type PlanId = "pro" | "team";
 
-// SAR minor units. Moyasar amounts are in halalas; Stripe SAR amounts use the
-// same 2-decimal minor unit, so one table covers both.
+// SAR minor units — Stripe SAR amounts use a 2-decimal minor unit.
 const PLAN_AMOUNT: Record<PlanId, number> = {
   pro: 29900,
   team: 79900,
@@ -167,44 +165,6 @@ async function stripeVerify(
   return { plan };
 }
 
-// ── Moyasar ──────────────────────────────────────────────────────────────────
-
-async function moyasarVerify(
-  request: Request,
-  env: Env
-): Promise<{ plan: PlanId }> {
-  const user = await authUser(request, env);
-  if (!env.MOYASAR_SECRET_KEY) throw new HttpError(503, "Moyasar is not configured");
-  const { paymentId } = await readJson<{ paymentId?: string }>(request);
-  if (!paymentId) throw new HttpError(400, "Missing paymentId");
-
-  const res = await fetch(
-    `https://api.moyasar.com/v1/payments/${encodeURIComponent(paymentId)}`,
-    { headers: { Authorization: `Basic ${btoa(`${env.MOYASAR_SECRET_KEY}:`)}` } }
-  );
-  const p = (await res.json()) as {
-    status?: string;
-    amount?: number;
-    currency?: string;
-    metadata?: { plan?: string; user_id?: string };
-  };
-  if (!res.ok) throw new HttpError(502, "Could not retrieve Moyasar payment");
-  if (p.status !== "paid") throw new HttpError(402, "Payment not completed");
-  if ((p.currency || "SAR").toUpperCase() !== "SAR") {
-    throw new HttpError(422, "Unexpected payment currency");
-  }
-  if (p.metadata?.user_id && p.metadata.user_id !== user.id) {
-    throw new HttpError(403, "Payment does not belong to this account");
-  }
-  const plan = planForAmount(p.amount || 0);
-  if (!plan || (p.metadata?.plan && p.metadata.plan !== plan)) {
-    throw new HttpError(422, "Unrecognised payment amount");
-  }
-
-  await upgradePlan(env, user.id, plan);
-  return { plan };
-}
-
 // ── Router ───────────────────────────────────────────────────────────────────
 
 const ROUTES: Record<
@@ -213,7 +173,6 @@ const ROUTES: Record<
 > = {
   "/billing/stripe/create-session": stripeCreateSession,
   "/billing/stripe/verify": stripeVerify,
-  "/billing/moyasar/verify": moyasarVerify,
 };
 
 export function isBillingPath(pathname: string): boolean {

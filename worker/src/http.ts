@@ -13,7 +13,6 @@ export interface Env {
   SUPABASE_ANON_KEY?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   STRIPE_SECRET_KEY?: string;
-  MOYASAR_SECRET_KEY?: string;
   APP_URL?: string;
 }
 

@@ -1,47 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
-import { useAuth } from "../context/AuthContext";
 import { PLAN_PRICE_SAR } from "../lib/planLimits";
 import {
   BILLING_ENABLED,
-  MOYASAR_ENABLED,
   STRIPE_ENABLED,
-  MOYASAR_PUBLISHABLE_KEY,
-  PLAN_AMOUNT_HALALAS,
   createStripeSession,
 } from "../lib/billing";
 
 export default function Checkout() {
-  const { t, language } = useLanguage();
-  const { user } = useAuth();
+  const { t } = useLanguage();
   const [params] = useSearchParams();
   const plan = params.get("plan") === "team" ? "team" : "pro";
 
-  const moyasarRef = useRef(null);
   const [stripeBusy, setStripeBusy] = useState(false);
   const [error, setError] = useState(null);
-
-  // Mount the Moyasar hosted card form (mada / Visa / Apple Pay).
-  useEffect(() => {
-    if (!MOYASAR_ENABLED || !user) return;
-    const el = moyasarRef.current;
-    const Moyasar = window.Moyasar;
-    if (!el || !Moyasar) return;
-    el.innerHTML = "";
-    Moyasar.init({
-      element: ".mysr-form",
-      amount: PLAN_AMOUNT_HALALAS[plan],
-      currency: "SAR",
-      description: `RFQ Ranker ${plan} — monthly`,
-      publishable_api_key: MOYASAR_PUBLISHABLE_KEY,
-      callback_url: `${window.location.origin}${window.location.pathname}#/checkout/success`,
-      methods: ["creditcard", "applepay", "stcpay"],
-      supported_networks: ["mada", "visa", "mastercard", "amex"],
-      language,
-      metadata: { user_id: user.id, plan },
-    });
-  }, [plan, language, user]);
 
   const payWithStripe = async () => {
     setError(null);
@@ -76,23 +49,6 @@ export default function Checkout() {
         </div>
       ) : (
         <div className="mt-8 space-y-8">
-          {MOYASAR_ENABLED && (
-            <section>
-              <h2 className="text-sm font-semibold text-navy mb-3">
-                {t("checkout.payCard")}
-              </h2>
-              <div ref={moyasarRef} className="mysr-form" />
-            </section>
-          )}
-
-          {MOYASAR_ENABLED && STRIPE_ENABLED && (
-            <div className="flex items-center gap-3 text-xs text-gray-400">
-              <span className="h-px flex-1 bg-gray-200" />
-              {t("auth.or")}
-              <span className="h-px flex-1 bg-gray-200" />
-            </div>
-          )}
-
           {STRIPE_ENABLED && (
             <section>
               <h2 className="text-sm font-semibold text-navy mb-3">
