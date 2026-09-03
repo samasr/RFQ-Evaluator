@@ -2,10 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
-import {
-  verifyStripePayment,
-  verifyMoyasarPayment,
-} from "../lib/billing";
+import { verifyStripePayment } from "../lib/billing";
 
 export default function CheckoutSuccess() {
   const { t } = useLanguage();
@@ -15,7 +12,6 @@ export default function CheckoutSuccess() {
   const ran = useRef(false);
 
   const sessionId = params.get("session_id"); // Stripe
-  const paymentId = params.get("id"); // Moyasar
 
   useEffect(() => {
     if (ran.current) return;
@@ -23,8 +19,6 @@ export default function CheckoutSuccess() {
 
     const verify = sessionId
       ? verifyStripePayment(sessionId)
-      : paymentId
-      ? verifyMoyasarPayment(paymentId)
       : Promise.reject(new Error(t("checkout.success.noReference")));
 
     verify
@@ -35,7 +29,7 @@ export default function CheckoutSuccess() {
       .catch((err) => {
         setState({ status: "error", plan: null, error: err.message });
       });
-  }, [sessionId, paymentId, refreshProfile, t]);
+  }, [sessionId, refreshProfile, t]);
 
   return (
     <div className="max-w-lg mx-auto px-6 py-24 text-center">

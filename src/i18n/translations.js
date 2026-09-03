@@ -126,8 +126,7 @@ const translations = {
       title: "Upgrade to {plan}",
       priceLine: "SAR {price} / month",
       comingSoon:
-        "Payment isn't configured on this deployment yet. Add the Moyasar and Stripe keys to enable checkout.",
-      payCard: "Pay with card — mada, Visa, Apple Pay",
+        "Payment isn't configured on this deployment yet. Add the Stripe key to enable checkout.",
       payInternational: "International card (Stripe)",
       payWithStripe: "Continue to Stripe",
       redirecting: "Redirecting…",
@@ -918,8 +917,7 @@ const translations = {
       title: "الترقية إلى {plan}",
       priceLine: "{price} ريال / شهر",
       comingSoon:
-        "لم يتم إعداد الدفع على هذا الإصدار بعد. أضِف مفاتيح Moyasar وStripe لتفعيل الدفع.",
-      payCard: "الدفع بالبطاقة — مدى، Visa، Apple Pay",
+        "لم يتم إعداد الدفع على هذا الإصدار بعد. أضِف مفتاح Stripe لتفعيل الدفع.",
       payInternational: "بطاقة دولية (Stripe)",
       payWithStripe: "المتابعة إلى Stripe",
       redirecting: "جارٍ التحويل…",
