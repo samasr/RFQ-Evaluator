@@ -66,7 +66,7 @@ export async function saveEvaluation(user, rfqHeader, suppliers) {
 
 // Shallow-merges `patch` into the stored evaluation payload (weights,
 // assumptions, …). Low volume, so a read-merge-write is fine.
-export async function updateEvaluation(user, id, patch) {
+async function writeEvaluationUpdate(user, id, patch) {
   if (!remoteFor(user)) return local.updateEvaluation(id, patch);
   const { data: row, error: readErr } = await supabase
     .from("evaluations")
@@ -81,6 +81,34 @@ export async function updateEvaluation(user, id, patch) {
     .update({ data: merged })
     .eq("id", id);
   if (error) throw error;
+}
+
+// updateEvaluation is called on every weights/assumptions change while the
+// user drags a slider on the Results page, which without debouncing fires a
+// full read-merge-write per tick — wasteful, and each one is a race window
+// against the others. Calls for the same evaluation id within 500ms are
+// coalesced into a single write of the merged patch (last value per field
+// wins, same as firing them sequentially, just without the extra round
+// trips). Keyed by id so concurrent edits to different evaluations don't
+// interfere with each other.
+const pendingPatchByEvaluation = new Map();
+const pendingTimerByEvaluation = new Map();
+const DEBOUNCE_MS = 500;
+
+export function updateEvaluation(user, id, patch) {
+  return new Promise((resolve, reject) => {
+    const merged = { ...(pendingPatchByEvaluation.get(id) || {}), ...patch };
+    pendingPatchByEvaluation.set(id, merged);
+
+    clearTimeout(pendingTimerByEvaluation.get(id));
+    const timer = setTimeout(() => {
+      const toWrite = pendingPatchByEvaluation.get(id);
+      pendingPatchByEvaluation.delete(id);
+      pendingTimerByEvaluation.delete(id);
+      writeEvaluationUpdate(user, id, toWrite).then(resolve, reject);
+    }, DEBOUNCE_MS);
+    pendingTimerByEvaluation.set(id, timer);
+  });
 }
 
 export async function deleteEvaluation(user, id) {

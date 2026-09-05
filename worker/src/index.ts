@@ -119,7 +119,8 @@ async function handleAiProxy(request: Request, env: Env): Promise<Response> {
     let plan: string;
     try {
       plan = await fetchUserPlan(env, userId);
-    } catch {
+    } catch (err) {
+      console.error("[ai-proxy] plan lookup failed", err);
       return jsonResponse(
         { error: "Couldn't verify your plan — try again in a moment." },
         503,
@@ -186,12 +187,16 @@ async function handleAiProxy(request: Request, env: Env): Promise<Response> {
       origin
     );
   } catch (err: unknown) {
+    console.error("[ai-proxy] Anthropic request failed", err);
     const status =
       err && typeof err === "object" && "status" in err && Number.isInteger((err as any).status)
         ? (err as any).status
         : 500;
-    const message = err instanceof Error ? err.message : "Anthropic API error";
-    return jsonResponse({ error: message }, status, origin);
+    return jsonResponse(
+      { error: "AI processing failed. Please try again." },
+      status,
+      origin
+    );
   }
 }
 

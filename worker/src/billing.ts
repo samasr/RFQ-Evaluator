@@ -92,7 +92,8 @@ async function upgradePlan(env: Env, userId: string, plan: PlanId): Promise<void
     }
   );
   if (!res.ok) {
-    throw new HttpError(502, `Could not update plan (${res.status})`);
+    console.error(`[billing] upgradePlan failed for user ${userId} (${res.status})`);
+    throw new HttpError(502, "Database error. Please try again.");
   }
 }
 
@@ -127,7 +128,10 @@ async function findPayment(
     )}&select=user_id,plan,status&limit=1`,
     { headers }
   );
-  if (!res.ok) throw new HttpError(502, `Could not read payments (${res.status})`);
+  if (!res.ok) {
+    console.error(`[billing] findPayment failed for ${providerPaymentId} (${res.status})`);
+    throw new HttpError(502, "Database error. Please try again.");
+  }
   const rows = (await res.json()) as PaymentRow[];
   return rows[0] ?? null;
 }
@@ -150,7 +154,10 @@ async function insertPendingPayment(env: Env, s: PaidSession): Promise<void> {
     }),
   });
   if (res.status === 409) return;
-  if (!res.ok) throw new HttpError(502, `Could not record payment (${res.status})`);
+  if (!res.ok) {
+    console.error(`[billing] insertPendingPayment failed for ${s.id} (${res.status})`);
+    throw new HttpError(502, "Database error. Please try again.");
+  }
 }
 
 async function setPaymentStatus(
@@ -169,7 +176,10 @@ async function setPaymentStatus(
       body: JSON.stringify({ status }),
     }
   );
-  if (!res.ok) throw new HttpError(502, `Could not update payment (${res.status})`);
+  if (!res.ok) {
+    console.error(`[billing] setPaymentStatus failed for ${providerPaymentId} (${res.status})`);
+    throw new HttpError(502, "Database error. Please try again.");
+  }
 }
 
 // The single idempotent path both /verify and the webhook go through: record
@@ -291,7 +301,8 @@ async function stripeCreateSession(
   });
   const data = (await res.json()) as { url?: string; error?: { message?: string } };
   if (!res.ok || !data.url) {
-    throw new HttpError(502, data.error?.message || "Stripe session failed");
+    console.error("[billing] stripeCreateSession failed", data.error?.message);
+    throw new HttpError(502, "Payment processing failed. Please try again.");
   }
   return { url: data.url };
 }
@@ -396,8 +407,13 @@ async function handleStripeWebhook(request: Request, env: Env): Promise<Response
     }
   } catch (err) {
     // Our DB write failed — return non-2xx so Stripe retries the delivery.
+    // The response body isn't shown to any end user (Stripe only inspects
+    // the status code to decide whether to retry), but keep it generic and
+    // log the real cause internally rather than echoing it back regardless.
+    console.error("[billing] webhook processing failed", err);
     const status = err instanceof HttpError ? err.status : 500;
-    const message = err instanceof Error ? err.message : "Webhook processing failed";
+    const message =
+      err instanceof HttpError ? err.message : "Webhook processing failed";
     return json({ error: message }, status);
   }
 
@@ -450,8 +466,19 @@ export async function handleBilling(
     const body = await handler(request, env);
     return jsonResponse(body, 200, origin);
   } catch (err) {
-    const status = err instanceof HttpError ? err.status : 500;
-    const message = err instanceof Error ? err.message : "Billing error";
-    return jsonResponse({ error: message }, status, origin);
+    // HttpError messages thrown in this file are curated to be safe to show
+    // the user (validation failures like "Unknown plan" or "Payment not
+    // completed") — third-party/DB failures are sanitized to a generic
+    // message at the point they're wrapped into an HttpError, above. Any
+    // other error here is unexpected, so it never reaches the client as-is.
+    if (err instanceof HttpError) {
+      return jsonResponse({ error: err.message }, err.status, origin);
+    }
+    console.error("[billing] unexpected error", err);
+    return jsonResponse(
+      { error: "Payment processing failed. Please try again." },
+      500,
+      origin
+    );
   }
 }
