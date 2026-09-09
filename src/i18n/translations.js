@@ -392,7 +392,7 @@ const translations = {
             "Supplier quotes uploaded as PDFs — AI extraction auto-filled price, lead time, Incoterms, and certifications for all 5.",
             "Scoring weights tuned for this RFQ: SASO compliance and landed cost raised, MOQ lowered.",
             "Every quote normalized to a SAR landed cost — freight, customs, and VAT applied per Incoterm.",
-            "AI clarification questions sent to the Chinese supplier to confirm the missing SASO documentation before ranking.",
+            "AI scoring flagged the missing SASO documentation on the Chinese supplier's quote before ranking.",
           ],
           keyInsight:
             "Chinese supplier appeared cheapest at face value but ranked 3rd after freight, customs, and SASO compliance were factored in.",
@@ -445,7 +445,7 @@ const translations = {
             "All 7 quotes bulk-uploaded in one drop; AI extraction filled the comparison table in minutes.",
             "Scoring weights shifted toward lead time and delivery terms for the 24-hour deadline.",
             "Landed-cost normalization exposed the 45-day lead time hidden behind the lowest headline price.",
-            "AI clarification questions flagged the SASO gap on the second-lowest bid before the board meeting.",
+            "AI scoring flagged the SASO gap on the second-lowest bid before the board meeting.",
           ],
           keyInsight:
             "Lowest price supplier had 45-day lead time — disqualified. Second lowest had SASO issues. Winner balanced cost, speed, and compliance.",
@@ -498,7 +498,7 @@ const translations = {
             "EUR and USD quotes uploaded as PDFs — AI extraction pulled unit prices, Incoterms, and warranty terms.",
             "Scoring weights balanced across cost, compliance, and payment terms for a capital purchase.",
             "Landed-cost normalization converted every quote to SAR DDP Dammam, adding freight and 5% customs.",
-            "AI clarification questions confirmed what the European quote excluded — freight, customs clearance, and installation.",
+            "AI scoring flagged what the European quote excluded — freight, customs clearance, and installation.",
           ],
           keyInsight:
             "European supplier offered superior specs but EUR price + freight + customs made total landed cost 34% higher than local authorized dealer.",
@@ -737,27 +737,6 @@ const translations = {
           moq: "MOQ",
           completeness: "Completeness",
         },
-      },
-      clarify: {
-        heading: "Clarification Questions",
-        description:
-          "Generate the follow-up questions to send each supplier before awarding — missing fields, ambiguous terms, and red flags to resolve.",
-        generateButton: "Generate Questions",
-        regenerateButton: "Regenerate",
-        notConfigured:
-          "AI isn't configured yet — set VITE_AI_PROXY_URL to your deployed proxy URL.",
-        loading: "Claude is reviewing the quotes…",
-        error: "Couldn't generate questions: {error}",
-        questionCount: "{count} questions",
-        noQuestions: "Quote looks complete — no clarification needed.",
-        rationaleLabel: "Why",
-        copyQuestions: "Copy",
-        copyAll: "Copy all",
-        copied: "Copied ✓",
-        emailSupplier: "Email",
-        emailSubject: "Clarifications on your quote — {title}",
-        emailIntro:
-          "Hello {supplier}, thank you for your quotation. Before we proceed, could you please clarify the following:",
       },
       memo: {
         heading: "Decision Memo",
@@ -1191,7 +1170,7 @@ const translations = {
             "رُفعت عروض الموردين كملفات PDF — وملأ الاستخراج بالذكاء الاصطناعي السعر ومدة التسليم وشروط التسليم والشهادات للموردين الخمسة تلقائيًا.",
             "ضُبطت أوزان التقييم لهذا الطلب: رُفع وزن الامتثال لسيسو والتكلفة الموصّلة، وخُفّض وزن الحد الأدنى للطلب.",
             "حُوّل كل عرض إلى تكلفة موصّلة بالريال — مع تطبيق الشحن والجمارك وضريبة القيمة المضافة حسب شرط التسليم.",
-            "أُرسلت أسئلة استيضاح بالذكاء الاصطناعي إلى المورد الصيني لتأكيد وثائق سيسو الناقصة قبل الترتيب.",
+            "أبرز التقييم بالذكاء الاصطناعي نقص وثائق سيسو في عرض المورد الصيني قبل الترتيب.",
           ],
           keyInsight:
             "بدا المورد الصيني الأرخص ظاهريًا، لكنه جاء في المرتبة الثالثة بعد احتساب الشحن والجمارك والامتثال لسيسو.",
@@ -1244,7 +1223,7 @@ const translations = {
             "رُفعت العروض السبعة دفعة واحدة؛ وملأ الاستخراج بالذكاء الاصطناعي جدول المقارنة خلال دقائق.",
             "حُوّلت أوزان التقييم نحو مدة التسليم وشروط التسليم بسبب مهلة الـ24 ساعة.",
             "كشف تطبيع التكلفة الموصّلة عن مدة تسليم 45 يومًا كانت مخفية خلف أدنى سعر معلن.",
-            "أبرزت أسئلة الاستيضاح بالذكاء الاصطناعي ثغرة سيسو في ثاني أقل عرض قبل اجتماع المجلس.",
+            "أبرز التقييم بالذكاء الاصطناعي ثغرة سيسو في ثاني أقل عرض قبل اجتماع المجلس.",
           ],
           keyInsight:
             "المورد الأقل سعرًا كانت مدة تسليمه 45 يومًا — تم استبعاده. الثاني الأقل سعرًا كانت لديه مشاكل في الامتثال لسيسو. الفائز حقق توازنًا بين التكلفة والسرعة والامتثال.",
@@ -1297,7 +1276,7 @@ const translations = {
             "رُفعت عروض اليورو والدولار كملفات PDF — واستخرج الذكاء الاصطناعي أسعار الوحدات وشروط التسليم وشروط الضمان.",
             "وُوزنت أوزان التقييم بين التكلفة والامتثال وشروط الدفع لكونها عملية شراء رأسمالية.",
             "حوّل تطبيع التكلفة الموصّلة كل عرض إلى الريال تسليم DDP الدمام، مع إضافة الشحن وجمارك 5%.",
-            "أكدت أسئلة الاستيضاح بالذكاء الاصطناعي ما استثناه العرض الأوروبي — الشحن والتخليص الجمركي والتركيب.",
+            "أبرز التقييم بالذكاء الاصطناعي ما استثناه العرض الأوروبي — الشحن والتخليص الجمركي والتركيب.",
           ],
           keyInsight:
             "قدّم المورد الأوروبي مواصفات أعلى، لكن سعر اليورو والشحن والجمارك رفعوا التكلفة الموصّلة الإجمالية بنسبة 34% مقارنة بالموزع المحلي المعتمد.",
@@ -1536,27 +1515,6 @@ const translations = {
           moq: "الحد الأدنى للطلب",
           completeness: "اكتمال البيانات",
         },
-      },
-      clarify: {
-        heading: "أسئلة الاستيضاح",
-        description:
-          "أنشئ أسئلة المتابعة لإرسالها إلى كل مورد قبل الترسية — الحقول الناقصة والشروط الغامضة والملاحظات التي تحتاج إلى حلّ.",
-        generateButton: "إنشاء الأسئلة",
-        regenerateButton: "إعادة الإنشاء",
-        notConfigured:
-          "لم يتم إعداد الذكاء الاصطناعي بعد — عيّن VITE_AI_PROXY_URL على رابط الخادم الوسيط المنشور.",
-        loading: "يراجع Claude عروض الأسعار…",
-        error: "تعذّر إنشاء الأسئلة: {error}",
-        questionCount: "{count} أسئلة",
-        noQuestions: "يبدو أن العرض مكتمل — لا حاجة إلى استيضاح.",
-        rationaleLabel: "السبب",
-        copyQuestions: "نسخ",
-        copyAll: "نسخ الكل",
-        copied: "تم النسخ ✓",
-        emailSupplier: "إرسال بريد",
-        emailSubject: "استيضاحات بشأن عرض سعركم — {title}",
-        emailIntro:
-          "مرحبًا {supplier}، شكرًا لعرض سعركم. قبل المتابعة، يُرجى توضيح ما يلي:",
       },
       memo: {
         heading: "مذكرة القرار",

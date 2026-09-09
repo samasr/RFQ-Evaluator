@@ -20,8 +20,8 @@ const MAX_DOCUMENTS = 10;
 const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024; // ~15MB base64 per file
 
 // Plans that unlock the AI proxy. Everything the proxy does (scoring, memos,
-// clarifications, PDF extraction) is a paid feature — the free plan can't reach
-// Anthropic through here at all. Kept in lockstep with src/lib/planLimits.js.
+// PDF extraction) is a paid feature — the free plan can't reach Anthropic
+// through here at all. Kept in lockstep with src/lib/planLimits.js.
 const PAID_PLANS = new Set(["pro", "team"]);
 
 // Frontend-supplied `feature` tag -> label for the 403 message. The gate rule
@@ -29,7 +29,6 @@ const PAID_PLANS = new Set(["pro", "team"]);
 const FEATURE_LABEL: Record<string, string> = {
   aiScoring: "AI scoring",
   decisionMemo: "Decision memo generation",
-  clarification: "Clarification questions",
   extraction: "PDF quote extraction",
 };
 
