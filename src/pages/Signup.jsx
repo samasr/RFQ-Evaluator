@@ -46,7 +46,7 @@ export default function Signup() {
       });
       // With email confirmation on, there's no session yet — tell the user to check their inbox.
       if (res?.session) {
-        navigate("/dashboard", { replace: true });
+        navigate("/dashboard", { replace: true, state: { trialStarted: true } });
       } else {
         setAlert({ kind: "success", text: t("auth.signup.confirmEmail") });
       }

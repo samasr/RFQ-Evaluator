@@ -2,6 +2,7 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider, useLanguage } from "./context/LanguageContext";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
+import TrialBanner from "./components/TrialBanner";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
@@ -22,6 +23,7 @@ function AppShell() {
   return (
     <div dir={dir} className="min-h-screen flex flex-col bg-white">
       <Navbar />
+      <TrialBanner />
 
       <main className="flex-1">
         <Routes>

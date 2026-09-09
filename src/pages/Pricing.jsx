@@ -24,7 +24,7 @@ function CheckIcon() {
   );
 }
 
-function PlanCard({ planId, popular, featureKeys, ctaLabel, onCta }) {
+function PlanCard({ planId, popular, featureKeys, ctaLabel, onCta, trialBadge, showNoCard }) {
   const { t } = useLanguage();
   const price = PLAN_PRICE_SAR[planId];
   return (
@@ -38,6 +38,11 @@ function PlanCard({ planId, popular, featureKeys, ctaLabel, onCta }) {
       {popular && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-navy">
           {t("pricing.mostPopular")}
+        </span>
+      )}
+      {trialBadge && (
+        <span className="absolute -top-3 right-4 rounded-full border-2 border-gold bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gold">
+          {t("pricing.trialBadge")}
         </span>
       )}
       <h3 className="text-lg font-bold text-navy">{t(`plan.names.${planId}`)}</h3>
@@ -66,6 +71,11 @@ function PlanCard({ planId, popular, featureKeys, ctaLabel, onCta }) {
       >
         {ctaLabel}
       </button>
+      {showNoCard && (
+        <p className="mt-2 text-center text-xs text-gray-400">
+          {t("pricing.noCardRequired")}
+        </p>
+      )}
     </div>
   );
 }
@@ -73,12 +83,23 @@ function PlanCard({ planId, popular, featureKeys, ctaLabel, onCta }) {
 export default function Pricing() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { user, isAuthConfigured, plan } = useAuth();
+  const { user, isAuthConfigured, rawPlan } = useAuth();
+  const loggedIn = Boolean(isAuthConfigured && user);
 
-  // Logged out → send to signup. Logged in → go to checkout for the chosen plan.
+  // Logged out → send to signup (which auto-starts the 7-day Pro trial).
+  // Logged in → go to checkout for the chosen plan.
   const startPlan = (planId) => {
-    if (isAuthConfigured && user) navigate(`/checkout?plan=${planId}`);
+    if (loggedIn) navigate(`/checkout?plan=${planId}`);
     else navigate("/signup");
+  };
+
+  // The free trial is only ever granted at signup, so "Start 7-Day Free
+  // Trial" only makes sense for logged-out visitors; a signed-in user's
+  // trial has already started, is running, or is over.
+  const ctaFor = (planId) => {
+    if (rawPlan === planId) return t("pricing.currentPlan");
+    if (!loggedIn) return t("pricing.cta.trial");
+    return t(`pricing.cta.${planId}`);
   };
 
   return (
@@ -104,7 +125,7 @@ export default function Pricing() {
               "free_normalization",
             ]}
             ctaLabel={
-              plan === "free"
+              rawPlan === "free"
                 ? t("pricing.currentPlan")
                 : t("pricing.cta.free")
             }
@@ -113,6 +134,8 @@ export default function Pricing() {
           <PlanCard
             planId="pro"
             popular
+            trialBadge
+            showNoCard={!loggedIn && rawPlan !== "pro"}
             featureKeys={[
               "pro_evaluations",
               "pro_suppliers",
@@ -120,22 +143,20 @@ export default function Pricing() {
               "pro_bilingual",
               "pro_export",
             ]}
-            ctaLabel={
-              plan === "pro" ? t("pricing.currentPlan") : t("pricing.cta.pro")
-            }
+            ctaLabel={ctaFor("pro")}
             onCta={() => startPlan("pro")}
           />
           <PlanCard
             planId="team"
+            trialBadge
+            showNoCard={!loggedIn && rawPlan !== "team"}
             featureKeys={[
               "team_everything",
               "team_members",
               "team_shared",
               "team_criteria",
             ]}
-            ctaLabel={
-              plan === "team" ? t("pricing.currentPlan") : t("pricing.cta.team")
-            }
+            ctaLabel={ctaFor("team")}
             onCta={() => startPlan("team")}
           />
         </div>

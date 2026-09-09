@@ -104,7 +104,10 @@ const translations = {
         free: "Get Started Free",
         pro: "Start Pro",
         team: "Start Team",
+        trial: "Start 7-Day Free Trial",
       },
+      noCardRequired: "No credit card required",
+      trialBadge: "7 DAYS FREE",
       features: {
         free_evaluations: "3 evaluations / month",
         free_suppliers: "Up to 5 suppliers",
@@ -178,8 +181,9 @@ const translations = {
         headline: "Evaluate Any Supplier Quote — Faster and Smarter",
         subheadline:
           "AI-powered RFQ evaluation for Saudi & GCC businesses. Compare suppliers fairly, score automatically, and generate boardroom-ready decision memos.",
-        ctaPrimary: "Start Free Evaluation",
+        ctaPrimary: "Start Free 7-Day Trial",
         ctaSecondary: "See How It Works",
+        ctaSubtitle: "No credit card required",
       },
       industries: {
         heading: "Built for Every Industry That Buys from Suppliers",
@@ -569,6 +573,15 @@ const translations = {
         view: "View",
       },
     },
+    trial: {
+      banner: {
+        active: "⏰ Your 7-day Pro trial ends in {days} days — Upgrade to keep access",
+        expired: "Your trial has ended. Upgrade to Pro to continue using AI features",
+        cta: "Upgrade Now →",
+      },
+      welcomeAfterSignup:
+        "Welcome! Your 7-day Pro trial has started. Enjoy full access to all features.",
+    },
     newEvaluation: {
       heading: "New Evaluation",
       rfqDetails: "RFQ Details",
@@ -895,7 +908,10 @@ const translations = {
         free: "ابدأ مجانًا",
         pro: "ابدأ الاحترافية",
         team: "ابدأ باقة الفريق",
+        trial: "ابدأ تجربة مجانية 7 أيام",
       },
+      noCardRequired: "لا حاجة لبطاقة ائتمان",
+      trialBadge: "7 أيام مجانًا",
       features: {
         free_evaluations: "3 تقييمات / شهر",
         free_suppliers: "حتى 5 موردين",
@@ -965,8 +981,9 @@ const translations = {
       hero: {
         headline: "قيّم عروض الموردين بذكاء وسرعة",
         subheadline: "منصة تقييم العروض بالذكاء الاصطناعي للشركات السعودية وشركات الخليج",
-        ctaPrimary: "ابدأ تقييمًا مجانيًا",
+        ctaPrimary: "ابدأ تجربة مجانية 7 أيام",
         ctaSecondary: "تعرّف على طريقة العمل",
+        ctaSubtitle: "لا حاجة لبطاقة ائتمان",
       },
       industries: {
         heading: "مصمم لكل قطاع يشتري من الموردين",
@@ -1354,6 +1371,15 @@ const translations = {
         savedOn: "تاريخ الحفظ",
         view: "عرض",
       },
+    },
+    trial: {
+      banner: {
+        active: "⏰ تنتهي فترتك التجريبية الاحترافية (7 أيام) خلال {days} أيام — رقِّ باقتك للاحتفاظ بالوصول",
+        expired: "انتهت فترتك التجريبية. رقِّ إلى الباقة الاحترافية لمواصلة استخدام ميزات الذكاء الاصطناعي",
+        cta: "الترقية الآن ←",
+      },
+      welcomeAfterSignup:
+        "مرحبًا! بدأت فترتك التجريبية الاحترافية لمدة 7 أيام. استمتع بالوصول الكامل لجميع الميزات.",
     },
     newEvaluation: {
       heading: "تقييم جديد",

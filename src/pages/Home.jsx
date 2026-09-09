@@ -59,6 +59,9 @@ export default function Home() {
                 {t("home.hero.ctaSecondary")}
               </button>
             </div>
+            <p className="mt-4 text-xs text-white/60">
+              {t("home.hero.ctaSubtitle")}
+            </p>
           </FadeInSection>
         </div>
       </section>

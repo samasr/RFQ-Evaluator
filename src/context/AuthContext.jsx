@@ -32,7 +32,9 @@ export function AuthProvider({ children }) {
     const reqId = ++profileReqId.current;
     const { data, error } = await supabase
       .from("users")
-      .select("id, email, name, plan, evaluations_count, created_at")
+      .select(
+        "id, email, name, plan, evaluations_count, created_at, trial_ends_at, trial_plan"
+      )
       .eq("id", uid)
       .maybeSingle();
     if (reqId !== profileReqId.current) return; // superseded
@@ -122,7 +124,27 @@ export function AuthProvider({ children }) {
   }, [user, loadProfile]);
 
   // `local` = every feature unlocked (unconfigured build, or public browsing).
-  const plan = !isAuthConfigured || !user ? "local" : profile?.plan ?? "free";
+  const rawPlan = !isAuthConfigured || !user ? "local" : profile?.plan ?? "free";
+
+  // Trial state: a 7-day Pro/Team trial granted at signup (see
+  // handle_new_user() in supabase/migrations/0004_trial.sql). Mirrors
+  // resolveEffectivePlan() in worker/src/http.ts — keep both in sync.
+  const trialEndsAtMs = profile?.trial_ends_at
+    ? new Date(profile.trial_ends_at).getTime()
+    : null;
+  const hasTrialHistory = Boolean(trialEndsAtMs && profile?.trial_plan);
+  const trialActive = hasTrialHistory && trialEndsAtMs > Date.now();
+  const trialExpired = hasTrialHistory && !trialActive && rawPlan === "free";
+  const trialDaysLeft = trialActive
+    ? Math.max(1, Math.ceil((trialEndsAtMs - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
+  // `plan` is the effective plan used for feature-gating everywhere in the
+  // app: a paid plan always wins, otherwise an active trial temporarily
+  // unlocks its plan's features. `rawPlan` is the actual billing plan
+  // (ignoring any trial) — use it for pricing/billing UI ("current plan",
+  // trial eligibility) where the real subscription tier matters.
+  const plan = rawPlan === "free" && trialActive ? profile.trial_plan : rawPlan;
 
   const value = useMemo(
     () => ({
@@ -132,6 +154,10 @@ export function AuthProvider({ children }) {
       user,
       profile,
       plan,
+      rawPlan,
+      trialActive,
+      trialExpired,
+      trialDaysLeft,
       displayName:
         profile?.name || user?.user_metadata?.name || user?.email || "",
       signUp,
@@ -148,6 +174,10 @@ export function AuthProvider({ children }) {
       user,
       profile,
       plan,
+      rawPlan,
+      trialActive,
+      trialExpired,
+      trialDaysLeft,
       signUp,
       signInWithPassword,
       signInWithGoogle,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -158,8 +158,11 @@ function AccountHeader({ monthlyUsed }) {
 
 function UpgradeBanner() {
   const { t } = useLanguage();
-  const { isAuthConfigured, user, plan } = useAuth();
-  if (!isAuthConfigured || !user || plan !== "free") return null;
+  const { isAuthConfigured, user, plan, trialExpired } = useAuth();
+  // A free account with no active/expired trial gets this generic nudge;
+  // an active trial already makes `plan` effectively "pro" (hides this), and
+  // an expired trial gets the more specific TrialBanner instead of this one.
+  if (!isAuthConfigured || !user || plan !== "free" || trialExpired) return null;
   return (
     <Link
       to="/pricing"
@@ -178,8 +181,19 @@ function UpgradeBanner() {
 export default function Dashboard() {
   const { t } = useLanguage();
   const { user, loading: authLoading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [state, setState] = useState({ status: "loading", list: [], monthly: 0 });
+  const [showTrialWelcome, setShowTrialWelcome] = useState(
+    Boolean(location.state?.trialStarted)
+  );
+
+  useEffect(() => {
+    if (!location.state?.trialStarted) return;
+    navigate(location.pathname, { replace: true, state: {} });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -205,6 +219,20 @@ export default function Dashboard() {
       <h1 className="text-3xl font-bold text-navy mb-8">
         {t("dashboard.heading")}
       </h1>
+
+      {showTrialWelcome && (
+        <div className="mb-8 flex items-start justify-between gap-3 rounded-lg border border-gold bg-gold/10 px-4 py-3 text-sm text-navy">
+          <span>{t("trial.welcomeAfterSignup")}</span>
+          <button
+            type="button"
+            onClick={() => setShowTrialWelcome(false)}
+            aria-label={t("plan.upgrade.close")}
+            className="shrink-0 text-navy/60 hover:text-navy"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <AccountHeader monthlyUsed={monthly} />
       <UpgradeBanner />

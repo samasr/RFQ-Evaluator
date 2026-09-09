@@ -7,7 +7,8 @@ import {
   isSupabaseConfigured,
   isPlanEnforced,
   verifySupabaseToken,
-  fetchUserPlan,
+  fetchUserPlanInfo,
+  resolveEffectivePlan,
 } from "./http";
 import { handleBilling } from "./billing";
 
@@ -118,7 +119,7 @@ async function handleAiProxy(request: Request, env: Env): Promise<Response> {
   if (userId && isPlanEnforced(env)) {
     let plan: string;
     try {
-      plan = await fetchUserPlan(env, userId);
+      plan = resolveEffectivePlan(await fetchUserPlanInfo(env, userId));
     } catch (err) {
       console.error("[ai-proxy] plan lookup failed", err);
       return jsonResponse(

@@ -89,18 +89,27 @@ export function isPlanEnforced(env: Env): boolean {
   return isSupabaseConfigured(env) && Boolean(env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
-// Reads the caller's plan from `public.users` with the service-role key (so the
-// lookup isn't subject to RLS). Returns the plan string, or "free" when the
-// profile row is missing. Throws on a transport/HTTP failure so the caller can
-// tell "definitely not paid" apart from "couldn't check".
-export async function fetchUserPlan(env: Env, userId: string): Promise<string> {
+export interface UserPlanInfo {
+  plan: string;
+  trialEndsAt: string | null;
+  trialPlan: string | null;
+}
+
+// Reads the caller's plan (and trial state) from `public.users` with the
+// service-role key (so the lookup isn't subject to RLS). Returns "free" /
+// nulls when the profile row is missing. Throws on a transport/HTTP failure
+// so the caller can tell "definitely not paid" apart from "couldn't check".
+export async function fetchUserPlanInfo(
+  env: Env,
+  userId: string
+): Promise<UserPlanInfo> {
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error("plan lookup not configured");
   }
   const res = await fetch(
     `${env.SUPABASE_URL}/rest/v1/users?id=eq.${encodeURIComponent(
       userId
-    )}&select=plan`,
+    )}&select=plan,trial_ends_at,trial_plan`,
     {
       headers: {
         apikey: env.SUPABASE_SERVICE_ROLE_KEY,
@@ -109,6 +118,30 @@ export async function fetchUserPlan(env: Env, userId: string): Promise<string> {
     }
   );
   if (!res.ok) throw new Error(`plan lookup failed (${res.status})`);
-  const rows = (await res.json()) as Array<{ plan?: string }>;
-  return rows[0]?.plan || "free";
+  const rows = (await res.json()) as Array<{
+    plan?: string;
+    trial_ends_at?: string | null;
+    trial_plan?: string | null;
+  }>;
+  const row = rows[0];
+  return {
+    plan: row?.plan || "free",
+    trialEndsAt: row?.trial_ends_at ?? null,
+    trialPlan: row?.trial_plan ?? null,
+  };
+}
+
+// A paid plan always wins; otherwise an unexpired trial temporarily unlocks
+// its plan's features; otherwise the caller is on "free". Mirrors
+// resolveEffectivePlan() in src/context/AuthContext.jsx — keep both in sync.
+export function resolveEffectivePlan(info: UserPlanInfo): string {
+  if (info.plan === "pro" || info.plan === "team") return info.plan;
+  if (
+    info.trialEndsAt &&
+    info.trialPlan &&
+    new Date(info.trialEndsAt) > new Date()
+  ) {
+    return info.trialPlan;
+  }
+  return "free";
 }
