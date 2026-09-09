@@ -86,7 +86,7 @@ export async function generateClarificationQuestions({
   const response = await fetch(proxyUrl, {
     method: "POST",
     headers: await aiProxyHeaders(),
-    body: JSON.stringify({ prompt, maxTokens: 3072, feature: "clarification" }),
+    body: JSON.stringify({ prompt, maxTokens: 8192, feature: "clarification" }),
   });
   await assertProxyResponseOk(response);
 
