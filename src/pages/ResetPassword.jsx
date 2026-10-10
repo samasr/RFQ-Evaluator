@@ -19,9 +19,21 @@ function readRecoveryParams(href) {
   return params;
 }
 
-// Reached from the password-recovery email link. Establishes the recovery
-// session from the URL tokens before showing the form, so that
-// updateUser({ password }) has a session to act on.
+// Cheap local sanity check so obviously broken links fail without a round trip.
+// The server still verifies the token in setSession() / updateUser().
+function looksLikeJwt(token) {
+  try {
+    const payload = token.split(".")[1];
+    JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Reached from the password-recovery email link. The form shows immediately
+// while the recovery session is established in the background; submit stays
+// disabled until it is, so updateUser({ password }) always has a session.
 export default function ResetPassword() {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -30,9 +42,15 @@ export default function ResetPassword() {
   // Read once: the effect below strips the tokens from the address bar, and
   // StrictMode re-runs effects in dev.
   const [params] = useState(() => readRecoveryParams(window.location.href));
-  // "verifying" → "ready" | "invalid"
-  const [status, setStatus] = useState("verifying");
-  const [linkError, setLinkError] = useState(null);
+  // "verifying" (form shown, submit locked) → "ready" | "invalid"
+  const [status, setStatus] = useState(() =>
+    looksLikeJwt(params.get("access_token") ?? "") && params.get("refresh_token")
+      ? "verifying"
+      : "invalid"
+  );
+  const [linkError, setLinkError] = useState(() =>
+    params.get("access_token") ? null : params.get("error_description")
+  );
   const started = useRef(false);
 
   useEffect(() => {
@@ -48,18 +66,14 @@ export default function ResetPassword() {
       `${window.location.pathname}${window.location.search}#/reset-password`
     );
 
-    if (!access_token || !refresh_token) {
-      setLinkError(params.get("error_description"));
-      setStatus("invalid");
-      return;
-    }
+    if (status === "invalid") return;
     setRecoverySession({ access_token, refresh_token })
       .then(() => setStatus("ready"))
       .catch((err) => {
         setLinkError(err.message);
         setStatus("invalid");
       });
-  }, [isAuthConfigured, params, setRecoverySession]);
+  }, [isAuthConfigured, params, status, setRecoverySession]);
 
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -68,6 +82,7 @@ export default function ResetPassword() {
 
   const submit = async (e) => {
     e.preventDefault();
+    if (isAuthConfigured && status !== "ready") return;
     setAlert(null);
     setError(null);
     if (password.length < 8) {
@@ -101,10 +116,6 @@ export default function ResetPassword() {
       )}
       {alert && <FormAlert kind={alert.kind}>{alert.text}</FormAlert>}
 
-      {isAuthConfigured && status === "verifying" && (
-        <p className="text-sm text-gray-500">{t("auth.reset.verifying")}</p>
-      )}
-
       {isAuthConfigured && status === "invalid" && (
         <>
           <FormAlert kind="error">
@@ -120,7 +131,7 @@ export default function ResetPassword() {
         </>
       )}
 
-      {(!isAuthConfigured || status === "ready") && (
+      {(!isAuthConfigured || status !== "invalid") && (
         <form onSubmit={submit} className="space-y-4" noValidate>
           <div>
             <label className={labelClass} htmlFor="reset-password">
@@ -139,10 +150,14 @@ export default function ResetPassword() {
           </div>
           <button
             type="submit"
-            disabled={!isAuthConfigured || busy}
+            disabled={!isAuthConfigured || busy || status !== "ready"}
             className="w-full bg-navy text-white px-4 py-2.5 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {busy ? t("auth.reset.submitting") : t("auth.reset.submit")}
+            {busy
+              ? t("auth.reset.submitting")
+              : status === "verifying"
+                ? t("auth.reset.verifying")
+                : t("auth.reset.submit")}
           </button>
         </form>
       )}
