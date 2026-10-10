@@ -56,6 +56,9 @@ const translations = {
         submitting: "Updating…",
         done: "Password updated. Redirecting…",
         backToLogin: "Back to login",
+        verifying: "Verifying your reset link…",
+        invalidLink: "This password reset link is invalid or has expired.",
+        requestNew: "Request new link",
       },
     },
     plan: {
@@ -839,6 +842,9 @@ const translations = {
         submitting: "جارٍ التحديث…",
         done: "تم تحديث كلمة المرور. جارٍ إعادة التوجيه…",
         backToLogin: "العودة لتسجيل الدخول",
+        verifying: "جارٍ التحقق من رابط إعادة التعيين…",
+        invalidLink: "رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية.",
+        requestNew: "طلب رابط جديد",
       },
     },
     plan: {

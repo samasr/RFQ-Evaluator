@@ -112,6 +112,15 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   }, []);
 
+  // The recovery email lands on /#/reset-password#access_token=…; the second
+  // "#" defeats supabase-js's own URL detection, so ResetPassword parses the
+  // tokens itself and hands them over here.
+  const setRecoverySession = useCallback(async ({ access_token, refresh_token }) => {
+    if (!isAuthConfigured) throw NOT_CONFIGURED;
+    const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+    if (error) throw error;
+  }, []);
+
   const updatePassword = useCallback(async (password) => {
     if (!isAuthConfigured) throw NOT_CONFIGURED;
     const { error } = await supabase.auth.updateUser({ password });
@@ -165,6 +174,7 @@ export function AuthProvider({ children }) {
       signInWithGoogle,
       signOut,
       sendPasswordReset,
+      setRecoverySession,
       updatePassword,
       refreshProfile,
     }),
@@ -183,6 +193,7 @@ export function AuthProvider({ children }) {
       signInWithGoogle,
       signOut,
       sendPasswordReset,
+      setRecoverySession,
       updatePassword,
       refreshProfile,
     ]
