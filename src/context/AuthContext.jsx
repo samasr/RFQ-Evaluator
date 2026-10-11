@@ -7,7 +7,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { supabase, isAuthConfigured, authRedirectTo } from "../lib/supabase";
+import {
+  supabase,
+  isAuthConfigured,
+  authRedirectTo,
+  consumeRedirectSession,
+} from "../lib/supabase";
 
 const AuthContext = createContext(null);
 
@@ -49,12 +54,15 @@ export function AuthProvider({ children }) {
     if (!isAuthConfigured) return;
     let active = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      setSession(data.session ?? null);
-      setLoading(false);
-      if (data.session?.user) loadProfile(data.session.user.id);
-    });
+    consumeRedirectSession()
+      .catch((err) => console.error("[auth] redirect handling failed", err))
+      .then(() => supabase.auth.getSession())
+      .then(({ data }) => {
+        if (!active) return;
+        setSession(data.session ?? null);
+        setLoading(false);
+        if (data.session?.user) loadProfile(data.session.user.id);
+      });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next ?? null);
